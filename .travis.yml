@@ -10,11 +10,12 @@ matrix:
   include:
     - os: osx
       compiler: clang
-      osx_image: xcode8
+      osx_image: xcode9.4
       env: BUILD_TYPE="Release"
 env:
   global:
-    - ASSET_FILE_NAME="cfdgo-${TRAVIS_TAG}-${TRAVIS_OS_NAME}-${TRAVIS_OSX_IMAGE}_x86_64"
+    - STATIC_ASSET_FILE_NAME="cfdgo-${TRAVIS_TAG}-${TRAVIS_OS_NAME}-${TRAVIS_OSX_IMAGE}_x86_64-static"
+    - DYNAMIC_ASSET_FILE_NAME="cfdgo-${TRAVIS_TAG}-${TRAVIS_OS_NAME}-${TRAVIS_OSX_IMAGE}_x86_64"
 
 addons:
   homebrew:
@@ -33,20 +34,34 @@ after_install:
 before_script:
   - cd "${TRAVIS_BUILD_DIR}"
   - echo "${TRAVIS_BUILD_DIR}"
-  - mkdir dist
-  - mkdir build
-  - cmake -S . -B build
-  - cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DENABLE_SHARED=off -DENABLE_TESTS=off --build build
+  - mkdir dist_static
+  - mkdir dist_dynamic
 
 script:
+  - mkdir build
+  - cmake -S . -B build
+  - cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DENABLE_SHARED=off -DENABLE_TESTS=off -DENABLE_JS_WRAPPER=off -DENABLE_CAPI=on --build build
   - cmake --build build
+  - cd build
+  - make install DESTDIR=../dist_static
+  - cd ..
+  - rm -rf build
+  - mkdir build
+  - cmake -S . -B build
+  - cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DENABLE_SHARED=on -DENABLE_TESTS=off -DENABLE_JS_WRAPPER=off -DENABLE_CAPI=on -DTARGET_RPATH="/usr/local/lib;@executable_path;./build/Release" --build build
+  - cmake --build build
+  - cd build
+  - make install DESTDIR=../dist_dynamic
+  - cd ..
 
 after_success:
-  - cd build
-  - make install DESTDIR=../dist
-  - cd ../dist
+  - cd dist_static
   - ls -l usr/local/lib
-  - zip -r "${ASSET_FILE_NAME}.zip" usr
+  - zip -r "${STATIC_ASSET_FILE_NAME}.zip" usr
+  - cd ..
+  - cd dist_dynamic
+  - ls -l usr/local/lib
+  - zip -r "${DYNAMIC_ASSET_FILE_NAME}.zip" usr
 
 before_deploy:
 
@@ -54,10 +69,12 @@ deploy:
   provider: releases
   api_key: ${GITHUB_API_KEY}
   file:
-    - "${ASSET_FILE_NAME}.zip"
+    - "${STATIC_ASSET_FILE_NAME}.zip"
+    - "${DYNAMIC_ASSET_FILE_NAME}.zip"
   draft: false
   on:
     tags: true
+  skip_cleanup: true
 
 after_deploy:
 
