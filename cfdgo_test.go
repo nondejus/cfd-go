@@ -336,6 +336,38 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 	fmt.Print("TestCfdGoParseDescriptor test done.\n")
 }
 
+func TestCfdGoCreateDescriptor(t *testing.T) {
+	// add checksum
+	{
+		networkType := (int)(KCfdNetworkLiquidv1)
+		descriptor := "wsh(multi(1,xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB/1/0/*,xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH/0/0/*))"
+		outputDescriptor, err := CfdGoGetDescriptorChecksum(uintptr(0), networkType, descriptor)
+		assert.NoError(t, err)
+		assert.Equal(t, descriptor+"#t2zpj2eu", outputDescriptor)
+	}
+
+	{
+		// generate parent extkey path
+		networkType := (int)(KCfdNetworkLiquidv1)
+		parentExtkey := "xprv9tviYANkXM1CY831VtMFKFn6LP6aMHf1kvtCZyTL9YbyMwTR2BSmJaEoqw59BZdQhLSx9ZxyKsRUeCetxA2xZ34eupBqZUsifnWyLJJ16j3"
+		pathFromParent := "0'/1'"
+		keyPathData, childExtkey, err := CfdGoGetParentExtkeyPathData(uintptr(0), parentExtkey, pathFromParent, (int)(KCfdExtPrivkey))
+		assert.NoError(t, err)
+		assert.Equal(t, "[03af54a0/0'/1']", keyPathData)
+		assert.Equal(t, "xprv9xhdg2NYoNDWKNnSrgamt2MrugMHPYDYAgfkiC7wMJh9rexbf2C49ZGfiF4X9iCbenr6RbyBAe3RGweoAU69LfWkpLfQ7hari4aood9DD6T", childExtkey)
+
+		extpubkey, err := CfdGoCreateExtPubkey(uintptr(0), childExtkey, (int)(KCfdNetworkMainnet))
+		assert.NoError(t, err)
+		assert.Equal(t, "xpub6Bgz5XuSdjmoXrruxi7nFAJbTiBmnzwPXubMWaXYueE8jTHkCZWJhMb9ZWEVFKcmC7XEaejUtrQv5HhHg1DzSw6tcbdbQpsBrBLch4zvTLP", extpubkey)
+
+		// add checksum
+		descriptor := "wsh(multi(1,[03af54a0/0'/1']xpub6Bgz5XuSdjmoXrruxi7nFAJbTiBmnzwPXubMWaXYueE8jTHkCZWJhMb9ZWEVFKcmC7XEaejUtrQv5HhHg1DzSw6tcbdbQpsBrBLch4zvTLP/1/0/*,[d34db33f/44'/0'/0']xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/0/*))"
+		outputDescriptor, err := CfdGoGetDescriptorChecksum(uintptr(0), networkType, descriptor)
+		assert.NoError(t, err)
+		assert.Equal(t, descriptor+"#ek3mykpf", outputDescriptor)
+	}
+}
+
 func TestCfdCreateRawTransaction(t *testing.T) {
 	handle, err := CfdGoCreateHandle()
 	assert.NoError(t, err)
@@ -1027,6 +1059,16 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, privkey, privkey2)
 
+	privkey3, wifNetwork, wifCompressed, err := CfdGoParsePrivkeyWif(handle, wif)
+	assert.NoError(t, err)
+	assert.Equal(t, privkey, privkey3)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), wifNetwork)
+	assert.Equal(t, true, wifCompressed)
+
+	wif2, err := CfdGoGetPrivkeyWif(handle, privkey, kNetwork, true)
+	assert.NoError(t, err)
+	assert.Equal(t, wif, wif2)
+
 	pubkey2 := ""
 	pubkey2, err = CfdGoGetPubkeyFromPrivkey(handle, privkey, "", true)
 	assert.NoError(t, err)
@@ -1042,6 +1084,16 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 	privkey2, err = CfdGoGetPrivkeyFromWif(handle, wif, kNetwork)
 	assert.NoError(t, err)
 	assert.Equal(t, privkey, privkey2)
+
+	privkey3, wifNetwork, wifCompressed, err = CfdGoParsePrivkeyWif(handle, wif)
+	assert.NoError(t, err)
+	assert.Equal(t, privkey, privkey3)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), wifNetwork)
+	assert.Equal(t, false, wifCompressed)
+
+	wif2, err = CfdGoGetPrivkeyWif(handle, privkey, kNetwork, false)
+	assert.NoError(t, err)
+	assert.Equal(t, wif, wif2)
 
 	pubkey2, err = CfdGoGetPubkeyFromPrivkey(handle, privkey, "", false)
 	assert.NoError(t, err)
@@ -1088,6 +1140,16 @@ func TestCfdExtkey(t *testing.T) {
 	pubkey, err := CfdGoGetPubkeyFromExtkey(handle, extprivkey3, kNetwork)
 	assert.NoError(t, err)
 	assert.Equal(t, "031d7463018f867de51a27db866f869ceaf52abab71827a6051bab8a0fd020f4c1", pubkey)
+
+	data, err := CfdGoGetExtkeyInformation(handle, extprivkey2)
+	assert.NoError(t, err)
+	if err == nil {
+		assert.Equal(t, "0488ade4", data.Version)
+		assert.Equal(t, "03af54a0", data.Fingerprint)
+		assert.Equal(t, "16ddac07d3c3110f0292136af4bc476323e87b6da49ac0b8eef5bcde17e8a672", data.ChainCode)
+		assert.Equal(t, (uint32)(1), data.Depth)
+		assert.Equal(t, (uint32)(2147483692), data.ChildNumber)
+	}
 
 	if err != nil {
 		errMsg, _ := CfdGoGetLastErrorMessage(handle)
