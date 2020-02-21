@@ -207,6 +207,65 @@ func TestCfdGoGetAddressFromLockingScript(t *testing.T) {
 	fmt.Print("TestCfdGoGetAddressesFromMultisig test done.\n")
 }
 
+func TestCfdGoGetAddressInfo(t *testing.T) {
+	handle := uintptr(0)
+
+	addr := "1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs"
+	info, err := CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkMainnet), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a914f54a5851e9372b87810a8e60cdd2e7cfd80b6e3188ac", info.LockingScript)
+	assert.Equal(t, "f54a5851e9372b87810a8e60cdd2e7cfd80b6e31", info.Hash)
+
+	addr = "mjawtDFWiNppWUqczgQevgyg6Hg7J8Uxcg"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a9142ca1d2e7214b16725cf6310867460633a061edcb88ac", info.LockingScript)
+
+	addr = "QKXGAM4Cvd1fvLEz5tbq4YwNRzTjdMWi2q"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkLiquidv1), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a914f42331c418ef4517ba644ad6e9fc99681ad4393788ac", info.LockingScript)
+
+	addr = "XRpicZNrFZumBMhRV5BSYW28pGX7JyY1ua"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkElementsRegtest), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2sh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "a9149ec42b6cfa1b0bc3f55f07af29867057cb0b8a2e87", info.LockingScript)
+
+	addr = "ert1q57etrknhl75e64jmqrvl0vwzu39xjpagaw9ynw"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkElementsRegtest), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2wpkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersion0), info.WitnessVersion)
+	assert.Equal(t, "0014a7b2b1da77ffa99d565b00d9f7b1c2e44a6907a8", info.LockingScript)
+
+	addr = "ex1q6tayh53l97qhs7fr98x8msgmn82egptfhpkyn53vkt22lrxswztsgnpmxp"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkLiquidv1), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2wsh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersion0), info.WitnessVersion)
+	assert.Equal(t, "0020d2fa4bd23f2f8178792329cc7dc11b99d5940569b86c49d22cb2d4af8cd07097", info.LockingScript)
+}
+
 func TestCfdGoParseDescriptor(t *testing.T) {
 	handle, err := CfdGoCreateHandle()
 	assert.NoError(t, err)
@@ -334,6 +393,38 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
 	fmt.Print("TestCfdGoParseDescriptor test done.\n")
+}
+
+func TestCfdGoCreateDescriptor(t *testing.T) {
+	// add checksum
+	{
+		networkType := (int)(KCfdNetworkLiquidv1)
+		descriptor := "wsh(multi(1,xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB/1/0/*,xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH/0/0/*))"
+		outputDescriptor, err := CfdGoGetDescriptorChecksum(uintptr(0), networkType, descriptor)
+		assert.NoError(t, err)
+		assert.Equal(t, descriptor+"#t2zpj2eu", outputDescriptor)
+	}
+
+	{
+		// generate parent extkey path
+		networkType := (int)(KCfdNetworkLiquidv1)
+		parentExtkey := "xprv9tviYANkXM1CY831VtMFKFn6LP6aMHf1kvtCZyTL9YbyMwTR2BSmJaEoqw59BZdQhLSx9ZxyKsRUeCetxA2xZ34eupBqZUsifnWyLJJ16j3"
+		pathFromParent := "0'/1'"
+		keyPathData, childExtkey, err := CfdGoGetParentExtkeyPathData(uintptr(0), parentExtkey, pathFromParent, (int)(KCfdExtPrivkey))
+		assert.NoError(t, err)
+		assert.Equal(t, "[03af54a0/0'/1']", keyPathData)
+		assert.Equal(t, "xprv9xhdg2NYoNDWKNnSrgamt2MrugMHPYDYAgfkiC7wMJh9rexbf2C49ZGfiF4X9iCbenr6RbyBAe3RGweoAU69LfWkpLfQ7hari4aood9DD6T", childExtkey)
+
+		extpubkey, err := CfdGoCreateExtPubkey(uintptr(0), childExtkey, (int)(KCfdNetworkMainnet))
+		assert.NoError(t, err)
+		assert.Equal(t, "xpub6Bgz5XuSdjmoXrruxi7nFAJbTiBmnzwPXubMWaXYueE8jTHkCZWJhMb9ZWEVFKcmC7XEaejUtrQv5HhHg1DzSw6tcbdbQpsBrBLch4zvTLP", extpubkey)
+
+		// add checksum
+		descriptor := "wsh(multi(1,[03af54a0/0'/1']xpub6Bgz5XuSdjmoXrruxi7nFAJbTiBmnzwPXubMWaXYueE8jTHkCZWJhMb9ZWEVFKcmC7XEaejUtrQv5HhHg1DzSw6tcbdbQpsBrBLch4zvTLP/1/0/*,[d34db33f/44'/0'/0']xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/0/*))"
+		outputDescriptor, err := CfdGoGetDescriptorChecksum(uintptr(0), networkType, descriptor)
+		assert.NoError(t, err)
+		assert.Equal(t, descriptor+"#ek3mykpf", outputDescriptor)
+	}
 }
 
 func TestCfdCreateRawTransaction(t *testing.T) {
@@ -788,7 +879,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2PKH(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2PKH test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
@@ -805,7 +896,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2MS test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
@@ -831,7 +922,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH test done.\n")
 }
 
 func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
@@ -1027,6 +1118,16 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, privkey, privkey2)
 
+	privkey3, wifNetwork, wifCompressed, err := CfdGoParsePrivkeyWif(handle, wif)
+	assert.NoError(t, err)
+	assert.Equal(t, privkey, privkey3)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), wifNetwork)
+	assert.Equal(t, true, wifCompressed)
+
+	wif2, err := CfdGoGetPrivkeyWif(handle, privkey, kNetwork, true)
+	assert.NoError(t, err)
+	assert.Equal(t, wif, wif2)
+
 	pubkey2 := ""
 	pubkey2, err = CfdGoGetPubkeyFromPrivkey(handle, privkey, "", true)
 	assert.NoError(t, err)
@@ -1042,6 +1143,16 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 	privkey2, err = CfdGoGetPrivkeyFromWif(handle, wif, kNetwork)
 	assert.NoError(t, err)
 	assert.Equal(t, privkey, privkey2)
+
+	privkey3, wifNetwork, wifCompressed, err = CfdGoParsePrivkeyWif(handle, wif)
+	assert.NoError(t, err)
+	assert.Equal(t, privkey, privkey3)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), wifNetwork)
+	assert.Equal(t, false, wifCompressed)
+
+	wif2, err = CfdGoGetPrivkeyWif(handle, privkey, kNetwork, false)
+	assert.NoError(t, err)
+	assert.Equal(t, wif, wif2)
 
 	pubkey2, err = CfdGoGetPubkeyFromPrivkey(handle, privkey, "", false)
 	assert.NoError(t, err)
@@ -1088,6 +1199,16 @@ func TestCfdExtkey(t *testing.T) {
 	pubkey, err := CfdGoGetPubkeyFromExtkey(handle, extprivkey3, kNetwork)
 	assert.NoError(t, err)
 	assert.Equal(t, "031d7463018f867de51a27db866f869ceaf52abab71827a6051bab8a0fd020f4c1", pubkey)
+
+	data, err := CfdGoGetExtkeyInformation(handle, extprivkey2)
+	assert.NoError(t, err)
+	if err == nil {
+		assert.Equal(t, "0488ade4", data.Version)
+		assert.Equal(t, "03af54a0", data.Fingerprint)
+		assert.Equal(t, "16ddac07d3c3110f0292136af4bc476323e87b6da49ac0b8eef5bcde17e8a672", data.ChainCode)
+		assert.Equal(t, (uint32)(1), data.Depth)
+		assert.Equal(t, (uint32)(2147483692), data.ChildNumber)
+	}
 
 	if err != nil {
 		errMsg, _ := CfdGoGetLastErrorMessage(handle)

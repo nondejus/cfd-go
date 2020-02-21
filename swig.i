@@ -348,6 +348,26 @@ func CfdGoParseDescriptor(handle uintptr, descriptor string, networkType int, bi
 }
 
 /**
+ * Get outputDescriptor's checksum.
+ * param: handle         cfd handle
+ * param: networkType    network type
+ * param: descriptor     descriptor.
+ * return: descriptorAddedChecksum   descriptor added checksum.
+ * return: err                       error
+ */
+func CfdGoGetDescriptorChecksum(handle uintptr, networkType int, descriptor string) (descriptorAddedChecksum string, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdGetDescriptorChecksum(cfdErrHandle, networkType, descriptor, &descriptorAddedChecksum)
+	err = convertCfdError(ret, cfdErrHandle)
+	return descriptorAddedChecksum, err
+}
+
+/**
  * Get multisig pubkeys address.
  * param: handle        cfd handle
  * param: redeemScript  multisig script
@@ -416,6 +436,48 @@ func CfdGoGetAddressFromLockingScript(handle uintptr, lockingScript string, netw
 	ret := CfdGetAddressFromLockingScript(cfdErrHandle, lockingScript, networkType, &address)
 	err = convertCfdError(ret, cfdErrHandle)
 	return address, err
+}
+
+/**
+ * Address information struct.
+ */
+type CfdAddressInfo struct {
+	// address
+	Address string
+	// network type
+	NetworkType int
+	// hash type
+	HashType int
+	// witness version (unuse: -1)
+	WitnessVersion int
+	// locking script
+	LockingScript string
+	// hash
+	Hash string
+}
+/**
+ * Get address information.
+ * param: handle         cfd handle
+ * param: address        address string
+ * return: data          address data (CfdAddressInfo)
+ * return: err           error
+ */
+func CfdGoGetAddressInfo(handle uintptr, address string) (data CfdAddressInfo, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdGetAddressInfo(cfdErrHandle, address, &data.NetworkType, &data.HashType, &data.WitnessVersion, &data.LockingScript, &data.Hash)
+	err = convertCfdError(ret, cfdErrHandle)
+	if err == nil {
+		data.Address = address
+		if data.WitnessVersion > 2147483647 {
+			data.WitnessVersion = (int)(KCfdWitnessVersionNone)
+		}
+	}
+	return data, err
 }
 
 /**
@@ -1618,6 +1680,48 @@ func CfdGoGetPrivkeyFromWif(handle uintptr, privkeyWif string, networkType int) 
 }
 
 /**
+ * Get privkey WIF from hex.
+ * param: handle          cfd handle.
+ * param: privkeyHex      privkey hex.
+ * param: networkType     privkey wif network type.
+ * param: isCompress      pubkey compressed.
+ * return: privkeyWif     privkey wif.
+ * return: err            error
+ */
+func CfdGoGetPrivkeyWif(handle uintptr, privkeyHex string, networkType int, isCompress bool) (privkeyWif string, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdGetPrivkeyWif(cfdErrHandle, privkeyHex, networkType, isCompress, &privkeyWif)
+	err = convertCfdError(ret, cfdErrHandle)
+	return privkeyWif, err
+}
+
+/**
+ * Parse privkey WIF data.
+ * param: handle          cfd handle.
+ * param: privkeyWif      privkey wif.
+ * return: privkeyHex     privkey hex.
+ * return: networkType    privkey wif network type.
+ * return: isCompress     pubkey compressed.
+ * return: err            error
+ */
+func CfdGoParsePrivkeyWif(handle uintptr, privkeyWif string) (privkeyHex string, networkType int, isCompress bool, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdParsePrivkeyWif(cfdErrHandle, privkeyWif, &privkeyHex, &networkType, &isCompress)
+	err = convertCfdError(ret, cfdErrHandle)
+	return privkeyHex, networkType, isCompress, err
+}
+
+/**
  * Get pubkey from privkey.
  * param: handle          cfd handle.
  * param: privkeyHex      privkey hex. (or privkeyWif)
@@ -1740,6 +1844,67 @@ func CfdGoGetPubkeyFromExtkey(handle uintptr, extkey string, networkType int) (p
 	ret := CfdGetPubkeyFromExtkey(cfdErrHandle, extkey, networkType, &pubkey)
 	err = convertCfdError(ret, cfdErrHandle)
 	return pubkey, err
+}
+
+/**
+ * Get parent key path data.
+ * param: handle             handle pointer.
+ * param: parentExtkey       parent ext key string.
+ * param: path               child path.
+ * param: childExtkeyType    child key type. (see CfdDescriptorKeyType)
+ * return: keyPathData       key path data.
+ * return: childExtkey       child ext key string.
+ * return: err               error
+ */
+func CfdGoGetParentExtkeyPathData(
+    handle uintptr, parentExtkey, path string, childExtkeyType int) (keyPathData, childExtkey string, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdGetParentExtkeyPathData(cfdErrHandle, parentExtkey, path, childExtkeyType, &keyPathData, &childExtkey)
+	err = convertCfdError(ret, cfdErrHandle)
+	return keyPathData, childExtkey, err
+}
+
+/**
+ * Extkey data struct.
+ */
+type CfdExtkeyData struct {
+	// version
+	Version string
+	// parent fingerprint
+	Fingerprint string
+	// chain code
+	ChainCode string
+	// depth
+	Depth uint32
+	// child number
+	ChildNumber uint32
+}
+
+/**
+ * Get extkey information.
+ * param: handle             handle pointer.
+ * param: extkey             ext key string.
+ * return: extkeyData        CfdExtkeyData
+ * return: err               error
+ */
+func CfdGoGetExtkeyInformation(
+    handle uintptr, extkey string) (extkeyData CfdExtkeyData, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	depthPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&extkeyData.Depth)))
+	childNumPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&extkeyData.ChildNumber)))
+	ret := CfdGetExtkeyInformation(cfdErrHandle, extkey, &extkeyData.Version, &extkeyData.Fingerprint, &extkeyData.ChainCode, depthPtr, childNumPtr)
+	err = convertCfdError(ret, cfdErrHandle)
+	return extkeyData, err
 }
 
 /**
