@@ -439,6 +439,48 @@ func CfdGoGetAddressFromLockingScript(handle uintptr, lockingScript string, netw
 }
 
 /**
+ * Address information struct.
+ */
+type CfdAddressInfo struct {
+	// address
+	Address string
+	// network type
+	NetworkType int
+	// hash type
+	HashType int
+	// witness version (unuse: -1)
+	WitnessVersion int
+	// locking script
+	LockingScript string
+	// hash
+	Hash string
+}
+/**
+ * Get address information.
+ * param: handle         cfd handle
+ * param: address        address string
+ * return: data          address data (CfdAddressInfo)
+ * return: err           error
+ */
+func CfdGoGetAddressInfo(handle uintptr, address string) (data CfdAddressInfo, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	ret := CfdGetAddressInfo(cfdErrHandle, address, &data.NetworkType, &data.HashType, &data.WitnessVersion, &data.LockingScript, &data.Hash)
+	err = convertCfdError(ret, cfdErrHandle)
+	if err == nil {
+		data.Address = address
+		if data.WitnessVersion > 2147483647 {
+			data.WitnessVersion = (int)(KCfdWitnessVersionNone)
+		}
+	}
+	return data, err
+}
+
+/**
  * UTXO struct.
  */
 type CfdUtxo struct {
