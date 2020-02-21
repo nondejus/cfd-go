@@ -879,7 +879,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2PKH(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2PKH test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
@@ -896,7 +896,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2MS test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
@@ -922,7 +922,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH test done.\n")
 }
 
 func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
