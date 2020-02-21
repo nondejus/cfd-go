@@ -207,6 +207,65 @@ func TestCfdGoGetAddressFromLockingScript(t *testing.T) {
 	fmt.Print("TestCfdGoGetAddressesFromMultisig test done.\n")
 }
 
+func TestCfdGoGetAddressInfo(t *testing.T) {
+	handle := uintptr(0)
+
+	addr := "1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs"
+	info, err := CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkMainnet), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a914f54a5851e9372b87810a8e60cdd2e7cfd80b6e3188ac", info.LockingScript)
+	assert.Equal(t, "f54a5851e9372b87810a8e60cdd2e7cfd80b6e31", info.Hash)
+
+	addr = "mjawtDFWiNppWUqczgQevgyg6Hg7J8Uxcg"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkTestnet), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a9142ca1d2e7214b16725cf6310867460633a061edcb88ac", info.LockingScript)
+
+	addr = "QKXGAM4Cvd1fvLEz5tbq4YwNRzTjdMWi2q"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkLiquidv1), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2pkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "76a914f42331c418ef4517ba644ad6e9fc99681ad4393788ac", info.LockingScript)
+
+	addr = "XRpicZNrFZumBMhRV5BSYW28pGX7JyY1ua"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkElementsRegtest), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2sh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersionNone), info.WitnessVersion)
+	assert.Equal(t, "a9149ec42b6cfa1b0bc3f55f07af29867057cb0b8a2e87", info.LockingScript)
+
+	addr = "ert1q57etrknhl75e64jmqrvl0vwzu39xjpagaw9ynw"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkElementsRegtest), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2wpkh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersion0), info.WitnessVersion)
+	assert.Equal(t, "0014a7b2b1da77ffa99d565b00d9f7b1c2e44a6907a8", info.LockingScript)
+
+	addr = "ex1q6tayh53l97qhs7fr98x8msgmn82egptfhpkyn53vkt22lrxswztsgnpmxp"
+	info, err = CfdGoGetAddressInfo(handle, addr)
+	assert.NoError(t, err)
+	assert.Equal(t, addr, info.Address)
+	assert.Equal(t, (int)(KCfdNetworkLiquidv1), info.NetworkType)
+	assert.Equal(t, (int)(KCfdP2wsh), info.HashType)
+	assert.Equal(t, (int)(KCfdWitnessVersion0), info.WitnessVersion)
+	assert.Equal(t, "0020d2fa4bd23f2f8178792329cc7dc11b99d5940569b86c49d22cb2d4af8cd07097", info.LockingScript)
+}
+
 func TestCfdGoParseDescriptor(t *testing.T) {
 	handle, err := CfdGoCreateHandle()
 	assert.NoError(t, err)
