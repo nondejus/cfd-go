@@ -2062,7 +2062,7 @@ func CfdGoCreateMultisigScriptSig(handle uintptr, signItems []CfdMultisigSignDat
  * return: err          error
  */
 func CfdGoSetElementsMultisigScriptSig(handle uintptr, txHex string, txid string, vout uint32, scriptsig string, hashType int) (outputTxHex string, err error) {
-	scriptsig = ""
+	outputTxHex = ""
 	cfdErrHandle, err := CfdGoCloneHandle(handle)
 	if err != nil {
 		return
@@ -2070,8 +2070,8 @@ func CfdGoSetElementsMultisigScriptSig(handle uintptr, txHex string, txid string
 	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
 
 	scriptsigItems, err := CfdGoParseScript(handle, scriptsig)
-	if ret != (int)(KCfdSuccess) {
-		return "", convertCfdError(ret, cfdErrHandle)
+	if err != nil {
+		return "", err
 	}
 	scriptsigIndex := len(scriptsigItems)
 	if scriptsigIndex < 3 {
@@ -2088,7 +2088,7 @@ func CfdGoSetElementsMultisigScriptSig(handle uintptr, txHex string, txid string
 		witnessScript = scriptsigItems[scriptsigIndex-1]
 		address := ""
 		lockingScript := ""
-		ret := CfdCreateAddress(cfdErrHandle, hashType, "", witnessScript, (int)(KCfdP2shP2wshAddress), &address, &lockingScript, &redeemScript)
+		ret := CfdCreateAddress(cfdErrHandle, hashType, "", witnessScript, (int)(KCfdNetworkLiquidv1), &address, &lockingScript, &redeemScript)
 		if ret != (int)(KCfdSuccess) {
 			return "", convertCfdError(ret, cfdErrHandle)
 		}
