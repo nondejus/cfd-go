@@ -39,26 +39,26 @@
  */
 func convertCfdErrorCode(retCode int) (err error) {
 	switch retCode {
-		case (int)(KCfdSuccess):
-			return nil
-		case (int)(KCfdUnknownError):
-			err = fmt.Errorf("CFD Error: Unknown error occered.: errorCode=[%d]", retCode)
-		case (int)(KCfdInternalError):
-			err = fmt.Errorf("CFD Error: Internal error occered.: errorCode=[%d]", retCode)
-		case (int)(KCfdMemoryFullError):
-			err = fmt.Errorf("CFD Error: Memory is full.: errorCode=[%d]", retCode)
-		case (int)(KCfdIllegalArgumentError):
-			err = fmt.Errorf("CFD Error: Illegal argument passed.: errorCode=[%d]", retCode)
-		case (int)(KCfdIllegalStateError):
-			err = fmt.Errorf("CFD Error: Illegal state api call.: errorCode=[%d]", retCode)
-		case (int)(KCfdOutOfRangeError):
-			err = fmt.Errorf("CFD Error: Out of range access occered.: errorCode=[%d]", retCode)
-		case (int)(KCfdInvalidSettingError):
-			err = fmt.Errorf("CFD Error: Invalid setting api call.: errorCode=[%d]", retCode)
-		case (int)(KCfdConnectionError):
-			err = fmt.Errorf("CFD Error: Connection error occered.: errorCode=[%d]", retCode)
-		case (int)(KCfdDiskAccessError):
-			err = fmt.Errorf("CFD Error: Disk access error occered.: errorCode=[%d]", retCode)
+	case (int)(KCfdSuccess):
+		return nil
+	case (int)(KCfdUnknownError):
+		err = fmt.Errorf("CFD Error: Unknown error occered.: errorCode=[%d]", retCode)
+	case (int)(KCfdInternalError):
+		err = fmt.Errorf("CFD Error: Internal error occered.: errorCode=[%d]", retCode)
+	case (int)(KCfdMemoryFullError):
+		err = fmt.Errorf("CFD Error: Memory is full.: errorCode=[%d]", retCode)
+	case (int)(KCfdIllegalArgumentError):
+		err = fmt.Errorf("CFD Error: Illegal argument passed.: errorCode=[%d]", retCode)
+	case (int)(KCfdIllegalStateError):
+		err = fmt.Errorf("CFD Error: Illegal state api call.: errorCode=[%d]", retCode)
+	case (int)(KCfdOutOfRangeError):
+		err = fmt.Errorf("CFD Error: Out of range access occered.: errorCode=[%d]", retCode)
+	case (int)(KCfdInvalidSettingError):
+		err = fmt.Errorf("CFD Error: Invalid setting api call.: errorCode=[%d]", retCode)
+	case (int)(KCfdConnectionError):
+		err = fmt.Errorf("CFD Error: Connection error occered.: errorCode=[%d]", retCode)
+	case (int)(KCfdDiskAccessError):
+		err = fmt.Errorf("CFD Error: Disk access error occered.: errorCode=[%d]", retCode)
 	}
 	return
 }
@@ -76,7 +76,7 @@ func convertCfdError(retCode int, handle uintptr) (err error) {
 	}
 
 	var errorMsg string
-	if handle ==  uintptr(0) {
+	if handle == uintptr(0) {
 		err = convertCfdErrorCode(retCode)
 	} else if ret := CfdGetLastErrorMessage(handle, &errorMsg); ret != (int)(KCfdSuccess) {
 		err = convertCfdErrorCode(retCode)
@@ -314,10 +314,10 @@ func CfdGoParseDescriptor(handle uintptr, descriptor string, networkType int, bi
 		index := SwigcptrUint32_t(uintptr(unsafe.Pointer(&i)))
 		reqSigNumPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&(data.ReqSigNum))))
 		ret = CfdGetDescriptorData(cfdErrHandle, descriptorHandle, index, maxNumPtr,
-				depthPtr, &data.ScriptType, &data.LockingScript,
-				&data.Address, &data.HashType, &data.RedeemScript,
-				&data.KeyType, &data.Pubkey, &data.ExtPubkey, &data.ExtPrivkey,
-				&data.IsMultisig, keyNumPtr, reqSigNumPtr)
+			depthPtr, &data.ScriptType, &data.LockingScript,
+			&data.Address, &data.HashType, &data.RedeemScript,
+			&data.KeyType, &data.Pubkey, &data.ExtPubkey, &data.ExtPrivkey,
+			&data.IsMultisig, keyNumPtr, reqSigNumPtr)
 		if ret != (int)(KCfdSuccess) {
 			break
 		}
@@ -330,8 +330,8 @@ func CfdGoParseDescriptor(handle uintptr, descriptor string, networkType int, bi
 			var keyData CfdDescriptorKeyData
 			index := SwigcptrUint32_t(uintptr(unsafe.Pointer(&i)))
 			ret = CfdGetDescriptorMultisigKey(cfdErrHandle, descriptorHandle,
-					index, &keyData.KeyType, &keyData.Pubkey,
-					&keyData.ExtPubkey, &keyData.ExtPrivkey)
+				index, &keyData.KeyType, &keyData.Pubkey,
+				&keyData.ExtPubkey, &keyData.ExtPrivkey)
 			if ret != (int)(KCfdSuccess) {
 				break
 			}
@@ -389,7 +389,7 @@ func CfdGoGetAddressesFromMultisig(handle uintptr, redeemScript string, networkT
 	maxKeyNumPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&maxKeyNum)))
 
 	ret := CfdGetAddressesFromMultisig(cfdErrHandle, redeemScript, networkType,
-			hashType, &multisigHandle, maxKeyNumPtr)
+		hashType, &multisigHandle, maxKeyNumPtr)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, cfdErrHandle)
 		return
@@ -401,7 +401,7 @@ func CfdGoGetAddressesFromMultisig(handle uintptr, redeemScript string, networkT
 		var address string
 		index := SwigcptrUint32_t(uintptr(unsafe.Pointer(&i)))
 		ret = CfdGetAddressFromMultisigKey(cfdErrHandle, multisigHandle,
-				index, &address, &pubkey)
+			index, &address, &pubkey)
 		if ret != (int)(KCfdSuccess) {
 			break
 		}
@@ -455,6 +455,7 @@ type CfdAddressInfo struct {
 	// hash
 	Hash string
 }
+
 /**
  * Get address information.
  * param: handle         cfd handle
@@ -573,9 +574,9 @@ func CfdGoCoinSelection(handle uintptr, utxos []CfdUtxo, targetAmounts []CfdTarg
 	txFeeAmountBuf := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.TxFeeAmount)))
 	knapsackMinChangeBuf := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.KnapsackMinChange)))
 	ret := CfdInitializeCoinSelection(cfdErrHandle, utxoCountBuf,
-				amountCountBuf, option.FeeAsset, txFeeAmountBuf,
-				option.EffectiveFeeRate, option.LongTermFeeRate, option.DustFeeRate,
-				knapsackMinChangeBuf, &coinSelectHandle)
+		amountCountBuf, option.FeeAsset, txFeeAmountBuf,
+		option.EffectiveFeeRate, option.LongTermFeeRate, option.DustFeeRate,
+		knapsackMinChangeBuf, &coinSelectHandle)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, cfdErrHandle)
 		return
@@ -669,7 +670,7 @@ type CfdEstimateFeeOption struct {
 	// fee asset
 	FeeAsset string
 	// Require blinding or not
-	RequireBlind bool 
+	RequireBlind bool
 }
 
 /**
@@ -705,7 +706,7 @@ func CfdGoEstimateFee(handle uintptr, txHex string, inputs []CfdEstimateFeeInput
 
 	var estimateFeeHandle uintptr
 	if ret := CfdInitializeEstimateFee(handle, &estimateFeeHandle,
-			option.UseElements); ret != (int)(KCfdSuccess) {
+		option.UseElements); ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, cfdErrHandle)
 		return
 	}
@@ -715,9 +716,9 @@ func CfdGoEstimateFee(handle uintptr, txHex string, inputs []CfdEstimateFeeInput
 		vout := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.Utxo.Vout)))
 		peginBtcTxSize := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.PeginBtcTxSize)))
 		if ret := CfdAddTxInForEstimateFee(
-				handle, estimateFeeHandle, input.Utxo.Txid, vout, input.Utxo.Descriptor, 
-				input.Utxo.Asset, input.IsIssuance, input.IsBlindIssuance, input.IsPegin,
-				peginBtcTxSize, input.FedpegScript); ret != (int)(KCfdSuccess) {
+			handle, estimateFeeHandle, input.Utxo.Txid, vout, input.Utxo.Descriptor,
+			input.Utxo.Asset, input.IsIssuance, input.IsBlindIssuance, input.IsPegin,
+			peginBtcTxSize, input.FedpegScript); ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, cfdErrHandle)
 			return
 		}
@@ -727,8 +728,8 @@ func CfdGoEstimateFee(handle uintptr, txHex string, inputs []CfdEstimateFeeInput
 	txFeeWorkPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&txFeeWork)))
 	inputFeeWorkPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&inputFeeWork)))
 	if ret := CfdFinalizeEstimateFee(handle, estimateFeeHandle, txHex,
-			option.FeeAsset, txFeeWorkPtr, inputFeeWorkPtr, option.RequireBlind,
-			option.EffectiveFeeRate); ret != (int)(KCfdSuccess) {
+		option.FeeAsset, txFeeWorkPtr, inputFeeWorkPtr, option.RequireBlind,
+		option.EffectiveFeeRate); ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, cfdErrHandle)
 		return
 	}
@@ -855,7 +856,7 @@ func CfdGoAddDestoryConfidentialTxOut(handle uintptr, txHex string, asset string
 	}
 	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
 
-	burnScript, err := CfdGoConvertScriptAsmToHex(handle, "OP_RETURN")  // byte of OP_RETURN
+	burnScript, err := CfdGoConvertScriptAsmToHex(handle, "OP_RETURN") // byte of OP_RETURN
 	satoshiPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
 	ret := CfdAddConfidentialTxOut(cfdErrHandle, txHex, asset, satoshiPtr, "", "", burnScript, "", &outputTxHex)
 	err = convertCfdError(ret, cfdErrHandle)
@@ -1310,7 +1311,7 @@ func CfdGoAddConfidentialTxUnlockingScriptByIndex(handle uintptr, txHex string, 
 	}
 	txHexWork, err := CfdGoAddConfidentialTxUnlockingScript(cfdErrHandle, txHex, txid, vout, isWitness, unlockingScript, clearStack)
 	if err != nil {
-		return 
+		return
 	}
 
 	outputTxHex = txHexWork
@@ -1588,7 +1589,7 @@ func CfdGoParseConfidentialAddress(handle uintptr, confidentialAddress string) (
 	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
 
 	ret := CfdParseConfidentialAddress(cfdErrHandle, confidentialAddress,
-			&address, &confidentialKey, &networkType)
+		&address, &confidentialKey, &networkType)
 	err = convertCfdError(ret, cfdErrHandle)
 	return address, confidentialKey, networkType, err
 }
@@ -1857,7 +1858,7 @@ func CfdGoGetPubkeyFromExtkey(handle uintptr, extkey string, networkType int) (p
  * return: err               error
  */
 func CfdGoGetParentExtkeyPathData(
-    handle uintptr, parentExtkey, path string, childExtkeyType int) (keyPathData, childExtkey string, err error) {
+	handle uintptr, parentExtkey, path string, childExtkeyType int) (keyPathData, childExtkey string, err error) {
 	cfdErrHandle, err := CfdGoCloneHandle(handle)
 	if err != nil {
 		return
@@ -1893,7 +1894,7 @@ type CfdExtkeyData struct {
  * return: err               error
  */
 func CfdGoGetExtkeyInformation(
-    handle uintptr, extkey string) (extkeyData CfdExtkeyData, err error) {
+	handle uintptr, extkey string) (extkeyData CfdExtkeyData, err error) {
 	cfdErrHandle, err := CfdGoCloneHandle(handle)
 	if err != nil {
 		return
@@ -1940,7 +1941,7 @@ func CfdGoParseScript(handle uintptr, script string) (scriptItems []string, err 
 			ret = freeRet
 		}
 	}
-	
+
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, cfdErrHandle)
 		scriptItems = nil
@@ -1984,8 +1985,8 @@ func CfdGoCreateScript(handle uintptr, scriptItems []string) (script string, err
 	}
 	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
 
-	scriptAsm := strings.Join(scriptItems, " ");
-	script, err = CfdGoConvertScriptAsmToHex(cfdErrHandle, scriptAsm);
+	scriptAsm := strings.Join(scriptItems, " ")
+	script, err = CfdGoConvertScriptAsmToHex(cfdErrHandle, scriptAsm)
 
 	return
 }
@@ -2032,11 +2033,11 @@ func CfdGoCreateMultisigScriptSig(handle uintptr, signItems []CfdMultisigSignDat
 	for i := 0; i < len(signItems); i++ {
 		if signItems[i].IsDerEncode {
 			ret = CfdAddMultisigScriptSigDataToDer(cfdErrHandle, multisigHandle,
-					signItems[i].Signature, signItems[i].SighashType,
-					signItems[i].SighashAnyoneCanPay, signItems[i].RelatedPubkey)
+				signItems[i].Signature, signItems[i].SighashType,
+				signItems[i].SighashAnyoneCanPay, signItems[i].RelatedPubkey)
 		} else {
 			ret = CfdAddMultisigScriptSigData(cfdErrHandle, multisigHandle,
-					signItems[i].Signature, signItems[i].RelatedPubkey)
+				signItems[i].Signature, signItems[i].RelatedPubkey)
 		}
 		if ret != (int)(KCfdSuccess) {
 			break
@@ -2047,6 +2048,73 @@ func CfdGoCreateMultisigScriptSig(handle uintptr, signItems []CfdMultisigSignDat
 		ret = CfdFinalizeMultisigScriptSig(cfdErrHandle, multisigHandle, redeemScript, &scriptsig)
 	}
 	return scriptsig, convertCfdError(ret, cfdErrHandle)
+}
+
+/**
+ * Set multisig scriptsig to locking script.
+ * param: handle        cfd handle.
+ * param: txHex         transaction hex
+ * param: txid          txid
+ * param: vout          vout
+ * param: scriptsig     hex encoded script.
+ * param: hashType      hash type (p2pkh, p2sh, etc...)
+ * return: outputTxHex  output transaction hex
+ * return: err          error
+ */
+func CfdGoSetElementsMultisigScriptSig(handle uintptr, txHex string, txid string, vout uint32, scriptsig string, hashType int) (outputTxHex string, err error) {
+	outputTxHex = ""
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	scriptsigItems, err := CfdGoParseScript(handle, scriptsig)
+	if err != nil {
+		return "", err
+	}
+	scriptsigIndex := len(scriptsigItems)
+	if scriptsigIndex < 3 {
+		return "", fmt.Errorf("CFD Error: message=[%s], code=[%d]", "Invalid scriptsig array length.", KCfdIllegalArgumentError)
+	}
+
+	redeemScript := ""
+	witnessScript := ""
+	if hashType == (int)(KCfdP2sh) {
+		redeemScript = scriptsigItems[scriptsigIndex-1]
+	} else if hashType == (int)(KCfdP2wsh) {
+		witnessScript = scriptsigItems[scriptsigIndex-1]
+	} else if hashType == (int)(KCfdP2shP2wsh) {
+		witnessScript = scriptsigItems[scriptsigIndex-1]
+		address := ""
+		lockingScript := ""
+		ret := CfdCreateAddress(cfdErrHandle, hashType, "", witnessScript, (int)(KCfdNetworkLiquidv1), &address, &lockingScript, &redeemScript)
+		if ret != (int)(KCfdSuccess) {
+			return "", convertCfdError(ret, cfdErrHandle)
+		}
+	} else {
+		return "", fmt.Errorf("CFD Error: message=[%s], code=[%d]", "Unsupported hashType.", KCfdIllegalArgumentError)
+	}
+
+	var multisigHandle uintptr
+	ret := CfdInitializeMultisigSign(cfdErrHandle, &multisigHandle)
+	if ret != (int)(KCfdSuccess) {
+		return "", convertCfdError(ret, cfdErrHandle)
+	}
+	defer CfdGoFreeMultisigSignHandle(cfdErrHandle, multisigHandle)
+
+	for i := 1; i < scriptsigIndex-1; i++ {
+		ret := CfdAddMultisigSignData(cfdErrHandle, multisigHandle, scriptsigItems[i], "")
+		if ret != (int)(KCfdSuccess) {
+			break
+		}
+	}
+
+	if ret == (int)(KCfdSuccess) {
+		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+		ret = CfdFinalizeElementsMultisigSign(cfdErrHandle, multisigHandle, txHex, txid, voutPtr, hashType, witnessScript, redeemScript, true, &outputTxHex)
+	}
+	return outputTxHex, convertCfdError(ret, cfdErrHandle)
 }
 
 /**
@@ -2070,9 +2138,9 @@ func CfdGoCreateMultisigScriptSig(handle uintptr, signItems []CfdMultisigSignDat
  * return: err                  error
  */
 func CfdGoVerifyConfidentialTxSignatureByIndex(
-		handle uintptr, txHex, signature, pubkey, script string, index uint32,
-		sighashType int, sighashAnyoneCanPay bool, satoshiAmount int64,
-		valueCommitment string, witnessVersion int) (result bool, err error) {
+	handle uintptr, txHex, signature, pubkey, script string, index uint32,
+	sighashType int, sighashAnyoneCanPay bool, satoshiAmount int64,
+	valueCommitment string, witnessVersion int) (result bool, err error) {
 	cfdErrHandle, err := CfdGoCloneHandle(handle)
 	if err != nil {
 		return
@@ -2084,10 +2152,10 @@ func CfdGoVerifyConfidentialTxSignatureByIndex(
 		return
 	}
 	resultWork, err := CfdGoVerifyConfidentialTxSignature(cfdErrHandle, txHex, signature,
-			pubkey, script, txid, vout, sighashType, sighashAnyoneCanPay,
-			satoshiAmount, valueCommitment, witnessVersion)
+		pubkey, script, txid, vout, sighashType, sighashAnyoneCanPay,
+		satoshiAmount, valueCommitment, witnessVersion)
 	if err != nil {
-		return 
+		return
 	}
 
 	result = resultWork
@@ -2115,9 +2183,9 @@ func CfdGoVerifyConfidentialTxSignatureByIndex(
  * return: err                  error
  */
 func CfdGoVerifyConfidentialTxSignature(
-		handle uintptr, txHex, signature, pubkey, script, txid string, vout uint32,
-		sighashType int, sighashAnyoneCanPay bool, satoshiAmount int64,
-		valueCommitment string, witnessVersion int) (result bool, err error) {
+	handle uintptr, txHex, signature, pubkey, script, txid string, vout uint32,
+	sighashType int, sighashAnyoneCanPay bool, satoshiAmount int64,
+	valueCommitment string, witnessVersion int) (result bool, err error) {
 	cfdErrHandle, err := CfdGoCloneHandle(handle)
 	if err != nil {
 		return
@@ -2127,8 +2195,8 @@ func CfdGoVerifyConfidentialTxSignature(
 	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
 	satoshiAmountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
 	ret := CfdVerifyConfidentialTxSignature(cfdErrHandle, txHex, signature,
-			pubkey, script, txid, voutPtr, sighashType, sighashAnyoneCanPay,
-			satoshiAmountPtr, valueCommitment, witnessVersion)
+		pubkey, script, txid, voutPtr, sighashType, sighashAnyoneCanPay,
+		satoshiAmountPtr, valueCommitment, witnessVersion)
 
 	if ret == (int)(KCfdSuccess) {
 		result = true
