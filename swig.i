@@ -2050,6 +2050,73 @@ func CfdGoCreateMultisigScriptSig(handle uintptr, signItems []CfdMultisigSignDat
 }
 
 /**
+ * Set multisig scriptsig to locking script.
+ * param: handle        cfd handle.
+ * param: txHex         transaction hex
+ * param: txid          txid
+ * param: vout          vout
+ * param: scriptsig     hex encoded script.
+ * param: hashType      hash type (p2pkh, p2sh, etc...)
+ * return: outputTxHex  output transaction hex
+ * return: err          error
+ */
+func CfdGoSetElementsMultisigScriptSig(handle uintptr, txHex string, txid string, vout uint32, scriptsig string, hashType int) (outputTxHex string, err error) {
+	scriptsig = ""
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	scriptsigItems, err := CfdGoParseScript(handle, scriptsig)
+	if ret != (int)(KCfdSuccess) {
+		return "", convertCfdError(ret, cfdErrHandle)
+	}
+	scriptsigIndex := len(scriptsigItems)
+	if scriptsigIndex < 3 {
+		return "", fmt.Errorf("CFD Error: message=[%s], code=[%d]", "Invalid scriptsig array length.", KCfdIllegalArgumentError)
+	}
+
+	redeemScript := ""
+	witnessScript := ""
+	if hashType == (int)(KCfdP2sh) {
+		redeemScript = scriptsigItems[scriptsigIndex-1]
+	} else if hashType == (int)(KCfdP2wsh) {
+		witnessScript = scriptsigItems[scriptsigIndex-1]
+	} else if hashType == (int)(KCfdP2shP2wsh) {
+		witnessScript = scriptsigItems[scriptsigIndex-1]
+		address := ""
+		lockingScript := ""
+		ret := CfdCreateAddress(cfdErrHandle, hashType, "", witnessScript, (int)(KCfdP2shP2wshAddress), &address, &lockingScript, &redeemScript)
+		if ret != (int)(KCfdSuccess) {
+			return "", convertCfdError(ret, cfdErrHandle)
+		}
+	} else {
+		return "", fmt.Errorf("CFD Error: message=[%s], code=[%d]", "Unsupported hashType.", KCfdIllegalArgumentError)
+	}
+
+	var multisigHandle uintptr
+	ret := CfdInitializeMultisigSign(cfdErrHandle, &multisigHandle)
+	if ret != (int)(KCfdSuccess) {
+		return "", convertCfdError(ret, cfdErrHandle)
+	}
+	defer CfdGoFreeMultisigSignHandle(cfdErrHandle, multisigHandle)
+
+	for i := 1; i < scriptsigIndex-1; i++ {
+		ret := CfdAddMultisigSignData(cfdErrHandle, multisigHandle, scriptsigItems[i], "")
+		if ret != (int)(KCfdSuccess) {
+			break
+		}
+	}
+
+	if ret == (int)(KCfdSuccess) {
+		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+		ret = CfdFinalizeElementsMultisigSign(cfdErrHandle, multisigHandle, txHex, txid, voutPtr, hashType, witnessScript, redeemScript, true, &outputTxHex)
+	}
+	return outputTxHex, convertCfdError(ret, cfdErrHandle)
+}
+
+/**
  * Verify signature in transaction input by index.
  *   (prototype interface)
  * param: handle                cfd handle.
