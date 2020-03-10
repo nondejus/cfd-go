@@ -122,18 +122,6 @@ func CfdGoFreeHandle(handle uintptr) (err error) {
 }
 
 /**
- * Copy and free cfd handle.
- * param: parentHandle  cfd parent handle
- * param: handle        cfd free handle
- * return: err          error struct
- */
-func CfdGoCopyAndFreeHandle(parentHandle uintptr, handle uintptr) (err error) {
-	CfdCopyErrorState(handle, parentHandle)
-	err = CfdGoFreeHandle(handle)
-	return
-}
-
-/**
  * Create Address.
  * param: handle        cfd handle
  * param: hashType      hash type (p2pkh, p2sh, etc...)
