@@ -4,6 +4,12 @@ on:
   push:
     branches:
     - features/sprint*
+    paths-ignore:
+    - 'README.md'
+    - '*.dockerfile'
+    - '*.json'
+    - 'LICENSE'
+    - 'pc/**'
   pull_request:
     branches:
     - features/sprint*
