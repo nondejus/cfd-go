@@ -9,13 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getLastErrorMessage(handle uintptr) (message string, err error) {
-	ret := CfdGetLastErrorMessage(handle, &message)
-	// Do not use the Free API as it will be released by Go-GC.
-	err = convertCfdError(ret, handle)
-	return message, err
-}
-
 // first test
 func TestInitialize(t *testing.T) {
 	ret := CfdInitialize()
@@ -42,16 +35,11 @@ func TestCfdGetLastError(t *testing.T) {
 	lastErr := CfdGetLastErrorCode(handle)
 	assert.Equal(t, (int)(KCfdSuccess), lastErr)
 
-	errMsg, err := getLastErrorMessage(handle)
-	assert.NoError(t, err)
-	assert.Equal(t, "", errMsg)
-
-	//_, _, _, err = CfdGoCreateAddress(200, "", "", 200)
-	//lastErr = CfdGetLastErrorCode(handle)
-	//assert.Equal(t, (int)(KCfdIllegalArgumentError), lastErr)
-	//assert.Error(t, err)
-	//errMsg, _ = getLastErrorMessage(handle)
-	//assert.Equal(t, "Illegal network type.", errMsg)
+	_, _, _, err = CfdGoCreateAddress(200, "", "", 200)
+	lastErr = CfdGetLastErrorCode(handle)
+	assert.Contains(t, err.Error(), fmt.Sprintf("code=[%d]", KCfdIllegalArgumentError))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Illegal network type.")
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
@@ -84,8 +72,7 @@ func TestCfdGoCreateAddress(t *testing.T) {
 	assert.Equal(t, "76a914751e76e8199196d454941c45d1b3a323f1433bd688ac", lockingScript)
 	assert.Equal(t, "", segwitLockingScript)
 	if err != nil {
-		errStr, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errStr + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	hashType = (int)(KCfdP2sh)
@@ -97,8 +84,7 @@ func TestCfdGoCreateAddress(t *testing.T) {
 	assert.Equal(t, "a91423b0ad3477f2178bc0b3eed26e4e6316f4e83aa187", lockingScript)
 	assert.Equal(t, "", segwitLockingScript)
 	if err != nil {
-		errStr, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errStr + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	hashType = (int)(KCfdP2shP2wpkh)
@@ -110,8 +96,7 @@ func TestCfdGoCreateAddress(t *testing.T) {
 	assert.Equal(t, "a9147200818f884ee12b964442b059c11d0712b6abe787", lockingScript)
 	assert.Equal(t, "0014ef692e4bf0cd5ed05235a4fc582ec4a4ff9695b4", segwitLockingScript)
 	if err != nil {
-		errStr, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errStr + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	hashType = (int)(KCfdP2wpkh)
@@ -124,8 +109,7 @@ func TestCfdGoCreateAddress(t *testing.T) {
 	assert.Equal(t, "0014850f21411282f246e644b922a0a98a66cfffdcbc", lockingScript)
 	assert.Equal(t, "", segwitLockingScript)
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -146,8 +130,7 @@ func TestCfdGoCreateMultisigScript(t *testing.T) {
 	assert.Equal(t, "0020f39f6272ba6b57918eb047c5dc44fb475356b0f24c12fca39b19284e80008a42", redeemScript)
 	assert.Equal(t, "52210205ffcdde75f262d66ada3dd877c7471f8f8ee9ee24d917c3e18d01cee458bafe2102be61f4350b4ae7544f99649a917f48ba16cf48c983ac1599774958d88ad17ec552ae", witnessScript)
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -175,8 +158,7 @@ func TestCfdGoGetAddressesFromMultisig(t *testing.T) {
 		assert.Equal(t, "02be61f4350b4ae7544f99649a917f48ba16cf48c983ac1599774958d88ad17ec5", pubkeyList[1])
 	}
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -299,8 +281,7 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 		assert.Equal(t, uint32(0), descriptorDataList[0].ReqSigNum)
 	}
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	// p2sh-p2wsh(pkh)
@@ -353,8 +334,7 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 		assert.Equal(t, uint32(0), descriptorDataList[2].ReqSigNum)
 	}
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	// multisig (bitcoin)
@@ -391,8 +371,7 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 		assert.Equal(t, "", multisigList[1].ExtPrivkey)
 	}
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -499,8 +478,7 @@ func TestCfdCreateRawTransaction(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -570,8 +548,7 @@ func TestCfdGetTransaction(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -597,8 +574,7 @@ func TestCfdSetRawReissueAsset(t *testing.T) {
 	assert.Equal(t, "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000", outTxHex)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -617,8 +593,7 @@ func TestCfdGetIssuanceBlindingKey(t *testing.T) {
 	assert.Equal(t, "7d65c7970d836a878a1080399a3c11de39a8e82493e12b1ad154e383661fb77f", blindingKey)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -752,8 +727,7 @@ func TestCfdBlindTransaction(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -811,8 +785,7 @@ func TestCfdAddSignConfidentialTx(t *testing.T) {
 	assert.Equal(t, pubkey, stackData)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -994,8 +967,7 @@ func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -1068,8 +1040,7 @@ func TestCfdAddMultisigSignConfidentialTxWitness(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -1207,8 +1178,7 @@ func TestCfdConfidentialAddress(t *testing.T) {
 	assert.Equal(t, kNetworkType, netType)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -1230,8 +1200,7 @@ func TestCfdCalculateEcSignature(t *testing.T) {
 	assert.Equal(t, kExtSignature, signature)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -1297,8 +1266,7 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 	assert.Equal(t, pubkey, pubkey2)
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
@@ -1349,8 +1317,7 @@ func TestCfdExtkey(t *testing.T) {
 	}
 
 	if err != nil {
-		errMsg, _ := getLastErrorMessage(handle)
-		fmt.Print("[error message] " + errMsg + "\n")
+		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
 	err = CfdGoFreeHandle(handle)
