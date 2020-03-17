@@ -6,6 +6,7 @@
 #include "cfdc/cfdcapi_elements_address.h"
 #include "cfdc/cfdcapi_elements_transaction.h"
 #include "cfdc/cfdcapi_key.h"
+#include "cfdc/cfdcapi_ledger.h"
 #include "cfdc/cfdcapi_script.h"
 #include "cfdc/cfdcapi_transaction.h"
 %}
@@ -27,6 +28,7 @@
 %include "external/cfd/include/cfdc/cfdcapi_elements_address.h"
 %include "external/cfd/include/cfdc/cfdcapi_elements_transaction.h"
 %include "external/cfd/include/cfdc/cfdcapi_key.h"
+%include "external/cfd/include/cfdc/cfdcapi_ledger.h"
 %include "external/cfd/include/cfdc/cfdcapi_script.h"
 %include "external/cfd/include/cfdc/cfdcapi_transaction.h"
 
@@ -1076,6 +1078,49 @@ func CfdGoGetConfidentialTxOutCount(handle uintptr, txHex string) (count uint32,
 	ret := CfdGetConfidentialTxOutCount(cfdErrHandle, txHex, countPtr)
 	err = convertCfdError(ret, cfdErrHandle)
 	return count, err
+}
+
+/**
+ * Get txin index on confidential transaction.
+ * param: txHex    transaction hex
+ * param: txid     transaction id
+ * param: vout     transaction vout
+ * return: index   txin index
+ * return: err     error
+ */
+func CfdGoGetConfidentialTxInIndex(txHex string, txid string, vout uint32) (index uint32, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+	indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&index)))
+	ret := CfdGetConfidentialTxInIndex(handle, txHex, txid, voutPtr, indexPtr)
+	err = convertCfdError(ret, handle)
+	return index, err
+}
+
+/**
+ * Get txout index on confidential transaction.
+ * param: txHex                transaction hex
+ * param: address              address string
+ * param: directLockingScript  lockingScript (if address is empty)
+ * return: index               txout index
+ * return: err                 error
+ */
+func CfdGoGetConfidentialTxOutIndex(txHex string, address string, directLockingScript string) (index uint32, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&index)))
+	ret := CfdGetConfidentialTxOutIndex(handle, txHex, address, directLockingScript, indexPtr)
+	err = convertCfdError(ret, handle)
+	return index, err
 }
 
 /**
@@ -2230,6 +2275,64 @@ func CfdGoNormalizeSignature(handle uintptr, signature string) (normalizedSignat
 	}
 
 	return
+}
+
+/**
+ * Output data struct.
+ */
+type CfdOutputData struct {
+	// asset
+	Asset string
+	// amount
+	Amount int64
+	// address (not implements)
+	Address string
+	// locking script (not implements)
+	LockingScript string
+}
+
+/**
+ * Serialize transaction for ledger.
+ * param: txHex                  transaction hex.
+ * param: outputDataList         txout data list.
+ * param: isAuthorization        authorization flag.
+ * param: skipWitness            skip output witness flag.
+ * return: serializeData         serialize data.
+ * return: err                   error
+ */
+func CfdGoSerializeTxForLedger(txHex string, outputDataList []CfdOutputData, isAuthorization bool, skipWitness bool) (serializeData string, err error) {
+	serializeData = ""
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	var serializeHandle uintptr
+	ret := CfdInitializeTxSerializeForLedger(handle, &serializeHandle)
+	if ret != (int)(KCfdSuccess) {
+		return "", convertCfdError(ret, handle)
+	}
+	defer CfdFreeTxSerializeForLedger(handle, serializeHandle)
+
+	for i := 0; i < len(outputDataList); i++ {
+		var valueHex string
+		amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&outputDataList[i].Amount)))
+		ret = CfdGetConfidentialValueHex(handle, amountPtr, true, &valueHex)
+		if ret != (int)(KCfdSuccess) {
+			return "", convertCfdError(ret, handle)
+		}
+
+		indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&i)))
+		ret = CfdAddTxOutMetaDataForLedger(handle, serializeHandle, indexPtr, outputDataList[i].Asset, valueHex, "")
+		if ret != (int)(KCfdSuccess) {
+			return "", convertCfdError(ret, handle)
+		}
+	}
+
+	ret = CfdFinalizeTxSerializeForLedger(handle, serializeHandle, (int)(KCfdNetworkLiquidv1), txHex, skipWitness, isAuthorization, &serializeData)
+	err = convertCfdError(ret, handle)
+	return serializeData, err
 }
 
 %}
