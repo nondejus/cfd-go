@@ -1959,6 +1959,7 @@ func TestCfdGoAddConfidentialTxSignWithPrivkey(t *testing.T) {
 		errMsg, _ := CfdGoGetLastErrorMessage(handle)
 		fmt.Print("[error message] " + errMsg + "\n")
 	}
+	fmt.Print("TestCfdGoAddConfidentialTxSignWithPrivkey test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxPubkeyHashSign(t *testing.T) {
@@ -2020,9 +2021,7 @@ func TestCfdGoAddConfidentialTxPubkeyHashSign(t *testing.T) {
 		fmt.Print("[error message] " + errMsg + "\n")
 	}
 
-	err = CfdGoFreeHandle(handle)
-	assert.NoError(t, err)
-	fmt.Print("TestCfdAddSignConfidentialTx test done.\n")
+	fmt.Print("TestCfdGoAddConfidentialTxPubkeyHashSign test done.\n")
 }
 
 func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
@@ -2106,6 +2105,7 @@ func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
 		errMsg, _ := CfdGoGetLastErrorMessage(handle)
 		fmt.Print("[error message] " + errMsg + "\n")
 	}
+	fmt.Print("TestCfdGoAddConfidentialTxMultisigSign test done.\n")
 }
 
 // last test
