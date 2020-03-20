@@ -961,6 +961,29 @@ func CfdGoGetConfidentialTxInWitness(handle uintptr, txHex string, txinIndex uin
 }
 
 /**
+ * Get pegin witness stack on confidential transaction input.
+ * param: handle        cfd handle
+ * param: txHex         transaction hex
+ * param: txinIndex     txin index
+ * param: stackIndex    witness stack index
+ * return: stackData    witness stack data
+ * return: err          error
+ */
+func CfdGoGetConfidentialTxInPeginWitness(handle uintptr, txHex string, txinIndex uint32, stackIndex uint32) (stackData string, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	txinIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinIndex)))
+	stackIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&stackIndex)))
+	ret := CfdGetConfidentialTxInPeginWitness(cfdErrHandle, txHex, txinIndexPtr, stackIndexPtr, &stackData)
+	err = convertCfdError(ret, cfdErrHandle)
+	return stackData, err
+}
+
+/**
  * Get txin issuance on confidential transaction.
  * param: handle            cfd handle
  * param: txHex             transaction hex
@@ -1056,6 +1079,28 @@ func CfdGoGetConfidentialTxInWitnessCount(handle uintptr, txHex string, txinInde
 	txinIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinIndex)))
 	countPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&count)))
 	ret := CfdGetConfidentialTxInWitnessCount(cfdErrHandle, txHex, txinIndexPtr, countPtr)
+	err = convertCfdError(ret, cfdErrHandle)
+	return count, err
+}
+
+/**
+ * Get witness stack count on confidential transaction input.
+ * param: handle        cfd handle
+ * param: txHex         transaction hex
+ * param: txinIndex     txin index
+ * return: count        witness stack count
+ * return: err          error
+ */
+func CfdGoGetConfidentialTxInPeginWitnessCount(handle uintptr, txHex string, txinIndex uint32) (count uint32, err error) {
+	cfdErrHandle, err := CfdGoCloneHandle(handle)
+	if err != nil {
+		return
+	}
+	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+
+	txinIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinIndex)))
+	countPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&count)))
+	ret := CfdGetConfidentialTxInPeginWitnessCount(cfdErrHandle, txHex, txinIndexPtr, countPtr)
 	err = convertCfdError(ret, cfdErrHandle)
 	return count, err
 }
@@ -2278,6 +2323,218 @@ func CfdGoNormalizeSignature(handle uintptr, signature string) (normalizedSignat
 }
 
 /**
+ * Decode der encoded signature.
+ * param: derEncodedSignature      signature encoded by der encodeing.
+ * return: signature               compact format signature.
+ * return: sighashType             sighash type.
+ * return: sighash_anyone_can_pay  flag of signing only the current input.
+ * return: err                     error
+ */
+func CfdGoDecodeSignatureFromDer(derEncodedSignature string) (signature string, sighashType int, sighash_anyone_can_pay bool, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	ret := CfdDecodeSignatureFromDer(handle, derEncodedSignature, &signature, &sighashType, &sighash_anyone_can_pay)
+	err = convertCfdError(ret, handle)
+	return
+}
+
+/**
+ * Generate sign with privkey, and add sign data to confidential transaction.
+ * param: txHex                transaction hex
+ * param: txid                 txin txid
+ * param: vout                 txin vout
+ * param: hashType             hash type (p2pkh, p2sh, etc...)
+ * param: pubkey               public key.
+ * param: privkey              private key.
+ * param: satoshiAmount        input satoshi amount.
+ *     (used only for exist valueCommitment.)
+ * param: valueCommitment      input value commitment.
+ * param: sighashType          sighash type
+ * param: sighashAnyoneCanPay  sighash anyone can pay flag
+ * param: hasGrindR            grind-r option for ec-signature.
+ * return: outputTxHex         output transaction hex
+ * return: err                 error
+ */
+func CfdGoAddConfidentialTxSignWithPrivkey(txHex string, txid string, vout uint32, hashType int, pubkey string, privkey string, satoshiAmount int64, valueCommitment string, sighashType int, sighashAnyoneCanPay bool, hasGrindR bool) (outputTxHex string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+	satoshiAmountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
+	ret := CfdAddConfidentialTxSignWithPrivkeySimple(handle, txHex, txid, voutPtr, hashType, pubkey, privkey, satoshiAmountPtr, valueCommitment, sighashType, sighashAnyoneCanPay, hasGrindR, &outputTxHex)
+	err = convertCfdError(ret, handle)
+	return outputTxHex, err
+}
+
+/**
+ * Sign parameter data struct.
+ */
+type CfdSignParameter struct {
+	// data hex
+	Data string
+	// use der encode
+	IsDerEncode bool
+	// sighash type. (CfdSighashType)
+	SighashType int
+	// sighash anyone can pay.
+	SighashAnyoneCanPay bool
+}
+
+/**
+ * Add pubkey hash sign data to confidential transaction.
+ * param: txHex                transaction hex
+ * param: txid                 txin txid
+ * param: vout                 txin vout
+ * param: hashType             hash type (p2pkh, p2sh, etc...)
+ * param: pubkey               public key.
+ * param: CfdSignatureData     signature data.
+ * return: outputTxHex         output transaction hex
+ * return: err                 error
+ */
+func CfdGoAddConfidentialTxPubkeyHashSign(txHex string, txid string, vout uint32, hashType int, pubkey string, signatureData CfdSignParameter) (outputTxHex string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+	ret := CfdAddPubkeyHashSign(handle, (int)(KCfdNetworkLiquidv1), txHex, txid, voutPtr, hashType, pubkey, signatureData.Data, signatureData.IsDerEncode, signatureData.SighashType, signatureData.SighashAnyoneCanPay, &outputTxHex)
+	err = convertCfdError(ret, handle)
+	return outputTxHex, err
+}
+
+/**
+ * Add script hash sign data to confidential transaction.
+ * param: txHex                transaction hex
+ * param: txid                 txin txid
+ * param: vout                 txin vout
+ * param: hashType             hash type (p2pkh, p2sh, etc...)
+ * param: signDataList         sign data list.
+ * param: redeemScript         redeem script.
+ * return: outputTxHex         output transaction hex
+ * return: err                 error
+ */
+func CfdGoAddConfidentialTxScriptHashSign(txHex string, txid string, vout uint32, hashType int, signDataList []CfdSignParameter, redeemScript string) (outputTxHex string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	ret := (int)(KCfdSuccess)
+	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+	workTxHex := txHex
+	workOutputTxHex := ""
+	netType := (int)(KCfdNetworkLiquidv1)
+	clearFlag := true
+	for i := 0; i < len(signDataList); i++ {
+		ret = CfdAddTxSign(handle, netType, workTxHex, txid, voutPtr, hashType, signDataList[i].Data, signDataList[i].IsDerEncode, signDataList[i].SighashType, signDataList[i].SighashAnyoneCanPay, clearFlag, &workOutputTxHex)
+		if ret != (int)(KCfdSuccess) {
+			break
+		}
+		workTxHex = workOutputTxHex
+		workOutputTxHex = ""
+		clearFlag = false
+	}
+
+	if ret == (int)(KCfdSuccess) {
+		ret = CfdAddScriptHashSign(handle, netType, workTxHex, txid, voutPtr, hashType, redeemScript, clearFlag, &outputTxHex)
+	}
+
+	err = convertCfdError(ret, handle)
+	return outputTxHex, err
+}
+
+/**
+ * Add multisig sign to confidential transaction.
+ * param: txHex         transaction hex
+ * param: txid          txin txid
+ * param: vout          txin vout
+ * param: hashType      hash type (p2pkh, p2sh, etc...)
+ * param: signDataList  multisig sign data list.
+ * param: redeemScript  multisig redeem script.
+ * return: outputTxHex  output transaction hex
+ * return: err          error
+ */
+func CfdGoAddConfidentialTxMultisigSign(txHex string, txid string, vout uint32, hashType int, signDataList []CfdMultisigSignData, redeemScript string) (outputTxHex string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	var multisigHandle uintptr
+	ret := CfdInitializeMultisigSign(handle, &multisigHandle)
+	if ret != (int)(KCfdSuccess) {
+		return "", convertCfdError(ret, handle)
+	}
+	defer CfdFreeMultisigSignHandle(handle, multisigHandle)
+
+	for i := 0; i < len(signDataList); i++ {
+		if signDataList[i].IsDerEncode {
+			ret = CfdAddMultisigSignDataToDer(handle, multisigHandle,
+				signDataList[i].Signature, signDataList[i].SighashType,
+				signDataList[i].SighashAnyoneCanPay, signDataList[i].RelatedPubkey)
+		} else {
+			ret = CfdAddMultisigSignData(handle, multisigHandle,
+				signDataList[i].Signature, signDataList[i].RelatedPubkey)
+		}
+		if ret != (int)(KCfdSuccess) {
+			break
+		}
+	}
+
+	if ret == (int)(KCfdSuccess) {
+		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+		ret = CfdFinalizeMultisigSign(handle, multisigHandle, (int)(KCfdNetworkLiquidv1), txHex, txid, voutPtr, hashType, redeemScript, &outputTxHex)
+	}
+	return outputTxHex, convertCfdError(ret, handle)
+}
+
+/**
+ * Verify sign in transaction input.
+ * param: handle               cfd handle.
+ * param: txHex                transaction hex.
+ * param: txid                 txin txid
+ * param: vout                 txin vout
+ * param: address              address string.
+ * param: addressType          address type.
+ * param: directLockingScript  locking script direct input.
+ * param: satoshiAmount        input satoshi amount.
+ *     (used only for exist valueCommitment.)
+ * param: valueCommitment      input value commitment.
+ * return: isSuccess           result of verification signature
+ * return: err                 error
+ */
+func CfdGoVerifyConfidentialTxSign(txHex string, txid string, vout uint32, address string, addressType int, directLockingScript string, satoshiAmount int64, valueCommitment string) (isSuccess bool, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
+	satoshiAmountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
+	ret := CfdVerifyConfidentialTxSign(handle, txHex, txid, voutPtr, address, addressType, directLockingScript, satoshiAmountPtr, valueCommitment)
+	if ret == (int)(KCfdSuccess) {
+		isSuccess = true
+	} else if ret == (int)(KCfdSignVerificationError) {
+		isSuccess = false
+	} else {
+		err = convertCfdError(ret, handle)
+	}
+	return isSuccess, err
+}
+
+/*
  * Output data struct.
  */
 type CfdOutputData struct {
