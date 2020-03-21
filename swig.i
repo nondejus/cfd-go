@@ -1838,7 +1838,7 @@ func CfdGoGetPubkeyFromPrivkey(handle uintptr, privkeyHex string, privkeyWif str
  * param: handle          cfd handle.
  * param: seed            seed data(hex).
  * param: networkType     network type.
- * param: keyType         extkey type.
+ * param: keyType         extkey type. (0: privkey, 1: pubkey)
  * return: extkey         extkey.
  * return: err            error
  */
@@ -1860,7 +1860,7 @@ func CfdGoCreateExtkeyFromSeed(handle uintptr, seed string, networkType int, key
  * param: extkey          parent extkey.
  * param: path            bip32 key path.(ex: 0/0h/0'/0)
  * param: networkType     network type.
- * param: keyType         extkey type.
+ * param: keyType         extkey type. (0: privkey, 1: pubkey)
  * return: childExtkey    child extkey.
  * return: err            error
  */
