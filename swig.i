@@ -2592,4 +2592,44 @@ func CfdGoSerializeTxForLedger(txHex string, outputDataList []CfdOutputData, isA
 	return serializeData, err
 }
 
+/**
+ * CfdGoDecodeRawTransactionJson
+ * Decode transaction hex.
+ * param: txHex        transaction hex.
+ * param: nettype      nettype string. (mainnet/testnet/regtest)
+ * param: isElements   elements mode flag.
+ * return: jsonString  response json string.
+ * return: err         error
+ */
+func CfdGoDecodeRawTransactionJson(txHex string, netType string, isElements bool) (jsonString string, err error) {
+	jsonString = ""
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	cmdName := "DecodeRawTransaction"
+	networkStr := netType
+	mainchainNetworkStr := "regtest"
+	if isElements {
+		cmdName = "ElementsDecodeRawTransaction"
+		if networkStr == "liquidv1" {
+			mainchainNetworkStr = "mainnet"
+		} else if networkStr == "mainnet" {
+			networkStr = "liquidv1"
+			mainchainNetworkStr = "mainnet"
+		} else {
+			networkStr = "regtest"
+		}
+	}
+	requestJson := fmt.Sprintf(
+		"{{\"hex\":\"%s\",\"network\":\"%s\",\"mainchainNetwork\":\"%s\"}}",
+		txHex, networkStr, mainchainNetworkStr)
+
+	ret := CfdRequestExecuteJson(handle, cmdName, requestJson, &jsonString)
+	err = convertCfdError(ret, handle)
+	return jsonString, err
+}
+
 %}
