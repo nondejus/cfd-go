@@ -503,6 +503,71 @@ func TestCfdCreateRawTransaction(t *testing.T) {
 	fmt.Print("TestCfdCreateRawTransaction test done.\n")
 }
 
+func TestCfdCreateRawTransaction2(t *testing.T) {
+	handle, err := CfdGoInitializeConfidentialTransaction(uint32(2), uint32(0))
+	assert.NoError(t, err)
+	defer CfdGoFreeTransactionHandle(handle)
+
+	sequence := uint32(0xffffffff)
+	if err == nil {
+		err = CfdGoAddTxInput(
+			handle,
+			"7461b02405414d79e79a5050684a333c922c1136f4bdff5fb94b551394edebbd", 0,
+			sequence)
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddTxInput(
+			handle,
+			"1497e1f146bc5fe00b6268ea16a7069ecb90a2a41a183446d5df8965d2356dc1", 1,
+			sequence)
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddConfidentialTxOutput(
+			handle,
+			"ef47c42d34de1b06a02212e8061323f50d5f02ceed202f1cb375932aa299f751",
+			int64(100000000),
+			"CTEw7oSCUWDfmfhCEdsB3gsG7D9b4xLCZEq71H8JxRFeBu7yQN3CbSF6qT6J4F7qji4bq1jVSdVcqvRJ")
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddConfidentialTxOutput(
+			handle,
+			"6f1a4b6bd5571b5f08ab79c314dc6483f9b952af2f5ef206cd6f8e68eb1186f3",
+			int64(1900500000),
+			"2dxZw5iVZ6Pmqoc5Vn8gkUWDGB5dXuMBCmM")
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddConfidentialTxOutputFee(
+			handle,
+			"6f1a4b6bd5571b5f08ab79c314dc6483f9b952af2f5ef206cd6f8e68eb1186f3",
+			int64(500000))
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddConfidentialTxOutputDestroyAmount(
+			handle,
+			"ef47c42d34de1b06a02212e8061323f50d5f02ceed202f1cb375932aa299f751",
+			int64(50000000))
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		txHex, err := CfdGoFinalizeTransaction(handle)
+		assert.NoError(t, err)
+		assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff040151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a12000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a00000000", txHex)
+	}
+
+	fmt.Print("TestCfdCreateRawTransaction2 test done.\n")
+}
+
 func TestCfdGetTransaction(t *testing.T) {
 	handle, err := CfdGoCreateHandle()
 	assert.NoError(t, err)
@@ -2106,6 +2171,16 @@ func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
 		fmt.Print("[error message] " + errMsg + "\n")
 	}
 	fmt.Print("TestCfdGoAddConfidentialTxMultisigSign test done.\n")
+}
+
+func TestCfdGoDecodeRawTransaction(t *testing.T) {
+	txHex := "0200000001020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000000004004730440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a790147304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b0147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae00000000000000000000000000"
+	expJsonStr := "{\"txid\":\"cf7783b2b1de646e35186df988a219a17f0317b5c3f3c47fa4ab2d7463ea3992\",\"hash\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"wtxid\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"withash\":\"a9357382302ed93ab51083f451e2d7872db11ef07948198b30166af1576fe678\",\"version\":2,\"size\":745,\"vsize\":571,\"weight\":2281,\"locktime\":0,\"vin\":[{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":0,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"txinwitness\":[\"\",\"30440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a7901\",\"304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b01\",\"522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae\"]},{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":1,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"issuance\":{\"assetBlindingNonce\":\"0b8954757234fd3ec9cf0dd6ef0a89d825ec56a9532e7da4b6cb90c51be3bbd8\",\"assetEntropy\":\"6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306\",\"isreissuance\":true,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"assetamount\":600000000}}],\"vout\":[{\"value\":999587680,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"02200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d\",\"commitmentnonce_fully_valid\":true,\"n\":0,\"scriptPubKey\":{\"asm\":\"OP_HASH160 ef3e40882e17d6e477082fcafeb0f09dc32d377b OP_EQUAL\",\"hex\":\"a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87\",\"reqSigs\":1,\"type\":\"scripthash\",\"addresses\":[\"H4zXUS6DJhgaQz4VD6qeq9n5mHhM9rsSMP\"]}},{\"value\":700000000,\"asset\":\"ed6927df918c89b5e3d8b5062acab2c749a3291bb7451d4267c7daaf1b52ad0b\",\"commitmentnonce\":\"02cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a\",\"commitmentnonce_fully_valid\":true,\"n\":1,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 6c22e209d36612e0d9d2a20b814d7d8648cc7a77 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"Q789tcqaWXVKMzoEVLcNfreWoGaWauD7XG\"]}},{\"value\":50000,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"\",\"commitmentnonce_fully_valid\":false,\"n\":2,\"scriptPubKey\":{\"asm\":\"\",\"hex\":\"\",\"type\":\"fee\"}},{\"value\":600000000,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"commitmentnonce\":\"03ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed879\",\"commitmentnonce_fully_valid\":true,\"n\":3,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 9bdcb18911fa9faad6632ca43b81739082b0a195 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"QBUWEyd6fhyYwZotj1wEbDqoADc9dPEVeo\"]}}]}"
+
+	jsonStr, err := CfdGoDecodeRawTransactionJson(txHex, "mainnet", true)
+	assert.NoError(t, err)
+	assert.Equal(t, jsonStr, expJsonStr)
+	fmt.Print("TestCfdGoDecodeRawTransaction test done.\n")
 }
 
 // last test
