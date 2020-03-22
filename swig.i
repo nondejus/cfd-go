@@ -2662,7 +2662,7 @@ func CfdGoDecodeRawTransactionJson(txHex string, netType string, isElements bool
  * return: createTxHandle  handle of createrawtransaction.
  * return: err             error
  */
-func CfdGoInitializeTx(version uint32, locktime uint32) (createTxHandle uintptr, err error) {
+func CfdGoInitializeTransaction(version uint32, locktime uint32) (createTxHandle uintptr, err error) {
 	return InitializeTransaction(int(KCfdNetworkMainnet), version, locktime)
 }
 
@@ -2672,7 +2672,7 @@ func CfdGoInitializeTx(version uint32, locktime uint32) (createTxHandle uintptr,
  * return: createTxHandle  handle of createrawtransaction.
  * return: err             error
  */
-func CfdGoInitializeTxByHex(txHex string) (createTxHandle uintptr, err error) {
+func CfdGoInitializeTransactionByHex(txHex string) (createTxHandle uintptr, err error) {
 	return InitializeTransactionByHex(int(KCfdNetworkMainnet), txHex)
 }
 
