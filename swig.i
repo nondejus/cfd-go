@@ -2788,7 +2788,7 @@ func CfdGoAddConfidentialTxOutputDestroyAmount(createTxHandle uintptr, asset str
  * return: err             error
  */
 func CfdGoFinalizeTransaction(createTxHandle uintptr) (txHex string, err error) {
-	return FinalizeTransaction(createTxHandle, int(KCfdNetworkMainnet))
+	return FinalizeTransaction(createTxHandle)
 }
 
 /**
@@ -2884,6 +2884,12 @@ func InitializeTransactionByHex(networkType int, txHex string) (createTxHandle u
 	return createTxHandle, err
 }
 
+// AddTransactionInput : add createrawtransaction input data. (bitcoin, elements)
+// param: createTxHandle   handle of createrawtransaction.
+// param: txid             txid of utxo.
+// param: vout             vout of utxo.
+// param: sequence         sequence number.
+// return: err             error
 func AddTransactionInput(createTxHandle uintptr, txid string, vout uint32, sequence uint32) (err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -2898,6 +2904,13 @@ func AddTransactionInput(createTxHandle uintptr, txid string, vout uint32, seque
 	return err
 }
 
+// AddTransactionInput : add createrawtransaction output data. (bitcoin, elements)
+// param: createTxHandle   handle of createrawtransaction.
+// param: amount           satoshi amount.
+// param: address          address.
+// param: lockingScript    locking script. (ignore address)
+// param: asset            target asset. (only elements)
+// return: err             error
 func AddTransactionOutput(createTxHandle uintptr, amount int64, address string, lockingScript string, asset string) (err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -2911,7 +2924,11 @@ func AddTransactionOutput(createTxHandle uintptr, amount int64, address string, 
 	return err
 }
 
-func FinalizeTransaction(createTxHandle uintptr, networkType int) (txHex string, err error) {
+// FinalizeTransaction : finalize createrawtransaction. (bitcoin, elements)
+// param: createTxHandle   handle of createrawtransaction.
+// return: txHex           transaction hex.
+// return: err             error
+func FinalizeTransaction(createTxHandle uintptr) (txHex string, err error) {
 	txHex = ""
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -2924,30 +2941,47 @@ func FinalizeTransaction(createTxHandle uintptr, networkType int) (txHex string,
 	return txHex, err
 }
 
+// FreeTransactionHandle : free createrawtransaction handle.
+// param: createTxHandle   handle of createrawtransaction.
 func FreeTransactionHandle(createTxHandle uintptr) {
 	CfdFreeTransactionHandle(uintptr(0), createTxHandle)
 }
 
+// OutPoint : utxo outpoint struct.
 type OutPoint struct {
+	// txid
 	Txid string
+	// vout
 	Vout uint32
 }
 
+// ScriptWitness : witness stack.
 type ScriptWitness struct {
+	// witness stack by hex.
 	Stack []string
 }
 
+// TxIn : transaction input.
 type TxIn struct {
+	// utxo outpoint.
 	OutPoint     OutPoint
+	// sequence number.
 	Sequence     uint32
+	// witness stack.
 	WitnessStack ScriptWitness
 }
 
+// TxOut : transaction output.
 type TxOut struct {
+	// satoshi amount.
 	Amount        int64
+	// locking script.
 	LockingScript string
+	// address (if locking script is usual hashtype.)
+	Address       string
 }
 
+// ConfidentialTxIn : confidential transaction input.
 type ConfidentialTxIn struct {
 	OutPoint                 OutPoint
 	Sequence                 uint32
@@ -2957,17 +2991,33 @@ type ConfidentialTxIn struct {
 	InflationKeysRangeproof  string
 }
 
+// ConfidentialTxOut : confidential transaction output.
 type ConfidentialTxOut struct {
+	// satoshi amount (unblind value)
 	Amount          int64
+	// asset (or commitment asset)
 	Asset           string
+	// locking script
 	LockingScript   string
+	// address or confidential address. (if locking script is usual hashtype.)
 	Address         string
+	// commitment value
 	CommitmentValue string
+	// commitment nonce
 	CommitmentNonce string
+	// surjectionprooof of asset
 	Surjectionproof string
+	// rangeproof of value
 	Rangeproof      string
 }
 
+// CreateConfidentialTx : create confidential transaction.
+// param: version       transaction version.
+// param: locktime      transaction locking time.
+// param: txinList      transaction input list.
+// param: txoutList     transaction output list.
+// return: outputTxHex  transaction hex.
+// return: err          error
 func CreateConfidentialTx(version uint32, locktime uint32, txinList []ConfidentialTxIn, txoutList []ConfidentialTxOut) (outputTxHex string, err error) {
 	outputTxHex = ""
 	handle, err := CfdGoCreateHandle()
@@ -3015,6 +3065,12 @@ func CreateConfidentialTx(version uint32, locktime uint32, txinList []Confidenti
 	return outputTxHex, err
 }
 
+// AppendConfidentialTx : append confidential transaction.
+// param: txHex         transaction hex.
+// param: txinList      transaction input list.
+// param: txoutList     transaction output list.
+// return: outputTxHex  transaction hex.
+// return: err          error
 func AppendConfidentialTx(txHex string, txinList []ConfidentialTxIn, txoutList []ConfidentialTxOut) (outputTxHex string, err error) {
 	outputTxHex = ""
 	handle, err := CfdGoCreateHandle()
