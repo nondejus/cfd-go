@@ -1382,11 +1382,10 @@ func CfdGoAddConfidentialTxUnlockingScript(txHex, txid string, vout uint32, isWi
 	txHexWork := txHex
 	clearFlag := clearStack
 	for _, scriptItem := range scriptItems {
-		txHexWork2, err := CfdGoAddConfidentialTxSign(txHexWork, txid, vout, isWitness, scriptItem, clearFlag)
+		txHexWork, err = CfdGoAddConfidentialTxSign(txHexWork, txid, vout, isWitness, scriptItem, clearFlag)
 		if err != nil {
 			return "", err
 		}
-		txHexWork = txHexWork2
 
 		if clearFlag {
 			clearFlag = false
