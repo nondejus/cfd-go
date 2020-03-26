@@ -1374,24 +1374,19 @@ func CfdGoAddConfidentialTxUnlockingScriptByIndex(txHex string, index uint32, is
  * return: err                 error
  */
 func CfdGoAddConfidentialTxUnlockingScript(txHex, txid string, vout uint32, isWitness bool, unlockingScript string, clearStack bool) (outputTxHex string, err error) {
-	handle, err := CfdGoCreateHandle()
-	if err != nil {
-		return
-	}
-	defer CfdGoFreeHandle(handle)
-
 	scriptItems, err := CfdGoParseScript(unlockingScript)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	txHexWork := txHex
 	clearFlag := clearStack
 	for _, scriptItem := range scriptItems {
-		txHexWork, err = CfdGoAddConfidentialTxSign(txHexWork, txid, vout, isWitness, scriptItem, clearFlag)
+		txHexWork2, err := CfdGoAddConfidentialTxSign(txHexWork, txid, vout, isWitness, scriptItem, clearFlag)
 		if err != nil {
-			return
+			return "", err
 		}
+		txHexWork = txHexWork2
 
 		if clearFlag {
 			clearFlag = false
@@ -1399,7 +1394,7 @@ func CfdGoAddConfidentialTxUnlockingScript(txHex, txid string, vout uint32, isWi
 	}
 
 	outputTxHex = txHexWork
-	return
+	return outputTxHex, err
 }
 
 /**
