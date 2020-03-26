@@ -1993,15 +1993,19 @@ func TestCfdGoSerializeTxForLedger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSerializeHash, serializeData)
 
-	privkeyHex := "c13bf74db079650887953afc91299dc9441ab0f4b4080958031ae0a148bcf4c3"
+	privkeyHex := "4ba30e5d071da978486caf229a63d82a81169fbfc49b7b4418ebc6e93ebb11c5"
+	isGrindR := false
 	signature, err := CfdGoCalculateEcSignature(
-		uintptr(0), serializeData, privkeyHex, "", (int)(KCfdNetworkMainnet), true)
+		uintptr(0), serializeData, privkeyHex, "", (int)(KCfdNetworkMainnet), isGrindR)
 	assert.NoError(t, err)
-	assert.Equal(t, "0f3ecf7fe2b19c88505f68bb31d012da676bd4c95f5085c319d0d1d9c6b1bfab4a468ceb1d8453e5b3603da483a4235db169d1af35e52e34c1a706253970efcb", signature)
+	assert.Equal(t, "5ff18227381e9ecc05cf5d8a5d49166da3b639abf9c114b56c9b7a14870bd027371015a2a816e2cf1c992207a65fbed9e164bab476277e0eb929f16ecda7e49e", signature)
 
 	derSignature, err := CfdGoEncodeSignatureByDer(uintptr(0), signature, (int)(KCfdSigHashAll), false)
 	assert.NoError(t, err)
-	assert.Equal(t, "304402200f3ecf7fe2b19c88505f68bb31d012da676bd4c95f5085c319d0d1d9c6b1bfab02204a468ceb1d8453e5b3603da483a4235db169d1af35e52e34c1a706253970efcb01", derSignature)
+	assert.Equal(t, "304402205ff18227381e9ecc05cf5d8a5d49166da3b639abf9c114b56c9b7a14870bd0270220371015a2a816e2cf1c992207a65fbed9e164bab476277e0eb929f16ecda7e49e01", derSignature)
+
+	derEncodedSignature := string([]rune(derSignature)[:len(derSignature) - 2])
+	assert.Equal(t, "304402205ff18227381e9ecc05cf5d8a5d49166da3b639abf9c114b56c9b7a14870bd0270220371015a2a816e2cf1c992207a65fbed9e164bab476277e0eb929f16ecda7e49e", derEncodedSignature)
 
 	fmt.Print("TestCfdGoSerializeTxForLedger test done.\n")
 }
