@@ -125,7 +125,6 @@ func CfdGoFreeHandle(handle uintptr) (err error) {
 
 /**
  * Create Address.
- * param: handle        cfd handle
  * param: hashType      hash type (p2pkh, p2sh, etc...)
  * param: pubkey        pubkey (pubkey hash only)
  * param: redeemScript  redeem script (script hash only)
@@ -150,7 +149,6 @@ func CfdGoCreateAddress(hashType int, pubkey string, redeemScript string, networ
 
 /**
  * Create multisig script and address.
- * param: handle        cfd handle
  * param: networkType   network type
  * param: hashType      hash type (p2sh, p2wsh, etc...)
  * param: pubkeys       pubkey list (max 15 key)
@@ -245,7 +243,6 @@ type CfdDescriptorKeyData struct {
 
 /**
  * Parse Output Descriptor.
- * param: handle               cfd handle
  * param: descriptor           output descriptor
  * param: networkType          network type
  * param: bip32DerivationPath  derive path
@@ -316,7 +313,6 @@ func CfdGoParseDescriptor(descriptor string, networkType int, bip32DerivationPat
 
 /**
  * Get outputDescriptor's checksum.
- * param: handle         cfd handle
  * param: networkType    network type
  * param: descriptor     descriptor.
  * return: descriptorAddedChecksum   descriptor added checksum.
@@ -336,7 +332,6 @@ func CfdGoGetDescriptorChecksum(networkType int, descriptor string) (descriptorA
 
 /**
  * Get multisig pubkeys address.
- * param: handle        cfd handle
  * param: redeemScript  multisig script
  * param: networkType   network type
  * param: hashType      hash type (p2sh, p2wsh, etc...)
@@ -386,7 +381,6 @@ func CfdGoGetAddressesFromMultisig(redeemScript string, networkType int, hashTyp
 
 /**
  * Get address from locking script.
- * param: handle         cfd handle
  * param: lockingScript  locking script
  * param: networkType    network type
  * param: hashType       hash type (p2sh, p2wsh, etc...)
@@ -425,7 +419,6 @@ type CfdAddressInfo struct {
 
 /**
  * Get address information.
- * param: handle         cfd handle
  * param: address        address string
  * return: data          address data (CfdAddressInfo)
  * return: err           error
@@ -517,7 +510,6 @@ func NewCfdCoinSelectionOption() CfdCoinSelectionOption {
 
 /**
  * Select coins.
- * param: handle         cfd handle
  * param: utxos          utxo array
  * param: targetAmounts  target amount array
  * param: option         option for coinSelection
@@ -655,7 +647,6 @@ func NewCfdEstimateFeeOption() CfdEstimateFeeOption {
 
 /**
  * Estimate fee amount.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: inputs        inputs to set in the transaction
  * param: option        options for fee estimation
@@ -709,7 +700,6 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 
 /**
  * Get initialized confidential transaction.
- * param: handle        cfd handle
  * param: version       transaction version
  * param: locktime      locktime
  * return: txHex        transaction hex
@@ -731,7 +721,6 @@ func CfdGoInitializeConfidentialTx(version uint32, locktime uint32) (txHex strin
 
 /**
  * Add txin to confidential transaction.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: txid          txid
  * param: vout          vout
@@ -755,7 +744,6 @@ func CfdGoAddConfidentialTxIn(txHex string, txid string, vout uint32, sequence u
 
 /**
  * Add txout to confidential transaction.
- * param: handle              cfd handle
  * param: txHex               transaction hex
  * param: asset               asset
  * param: satoshiAmount       amount by satoshi
@@ -781,7 +769,6 @@ func CfdGoAddConfidentialTxOut(txHex string, asset string, satoshiAmount int64, 
 
 /**
  * Update txout of confidential transaction.
- * param: handle              cfd handle
  * param: txHex               transaction hex
  * param: index               txout index
  * param: asset               asset
@@ -810,7 +797,6 @@ func CfdGoUpdateConfidentialTxOut(txHex string, index uint32, asset string, sato
 /**
  * Add output for destroying the specified amount of the specified asset.
  * This function is deprecated.
- * param: handle              cfd handle
  * param: txHex               transaction hex
  * param: asset               asset
  * param: satoshiAmount       amount by satoshi
@@ -833,21 +819,20 @@ func CfdGoAddDestoryConfidentialTxOut(txHex string, asset string, satoshiAmount 
 
 /**
  * Add output for destroying the specified amount of the specified asset.
- * param: handle              cfd handle
  * param: txHex               transaction hex
  * param: asset               asset
  * param: satoshiAmount       amount by satoshi
  * return: outputTxHex        output transaction hex
  * return: err                error
  */
-func CfdGoAddDestroyConfidentialTxOut(handle uintptr, txHex string, asset string, satoshiAmount int64) (outputTxHex string, err error) {
-	cfdErrHandle, err := CfdGoCloneHandle(handle)
+func CfdGoAddDestroyConfidentialTxOut(txHex string, asset string, satoshiAmount int64) (outputTxHex string, err error) {
+	cfdErrHandle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
 	}
-	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+	defer CfdGoFreeHandle(cfdErrHandle)
 
-	burnScript, err := CfdGoConvertScriptAsmToHex(handle, "OP_RETURN") // byte of OP_RETURN
+	burnScript, err := CfdGoConvertScriptAsmToHex("OP_RETURN") // byte of OP_RETURN
 	satoshiPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
 	ret := CfdAddConfidentialTxOut(cfdErrHandle, txHex, asset, satoshiPtr, "", "", burnScript, "", &outputTxHex)
 	err = convertCfdError(ret, cfdErrHandle)
@@ -878,7 +863,6 @@ type CfdTxData struct {
 
 /**
  * Get confidential transaction data.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * return: data         transaction data
  * return: err          error
@@ -902,7 +886,6 @@ func CfdGoGetConfidentialTxData(txHex string) (data CfdTxData, err error) {
 
 /**
  * Get txin on confidential transaction.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: index         txin index
  * return: txid         txid
@@ -928,7 +911,6 @@ func CfdGoGetConfidentialTxIn(txHex string, index uint32) (txid string, vout uin
 
 /**
  * Get witness stack on confidential transaction input.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: txinIndex     txin index
  * param: stackIndex    witness stack index
@@ -951,19 +933,18 @@ func CfdGoGetConfidentialTxInWitness(txHex string, txinIndex uint32, stackIndex 
 
 /**
  * Get pegin witness stack on confidential transaction input.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: txinIndex     txin index
  * param: stackIndex    witness stack index
  * return: stackData    witness stack data
  * return: err          error
  */
-func CfdGoGetConfidentialTxInPeginWitness(handle uintptr, txHex string, txinIndex uint32, stackIndex uint32) (stackData string, err error) {
-	cfdErrHandle, err := CfdGoCloneHandle(handle)
+func CfdGoGetConfidentialTxInPeginWitness(txHex string, txinIndex uint32, stackIndex uint32) (stackData string, err error) {
+	cfdErrHandle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
 	}
-	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+	defer CfdGoFreeHandle(cfdErrHandle)
 
 	txinIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinIndex)))
 	stackIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&stackIndex)))
@@ -974,7 +955,6 @@ func CfdGoGetConfidentialTxInPeginWitness(handle uintptr, txHex string, txinInde
 
 /**
  * Get txin issuance on confidential transaction.
- * param: handle            cfd handle
  * param: txHex             transaction hex
  * param: index             txin index
  * return: entropy          blinding asset entropy
@@ -1004,7 +984,6 @@ func CfdGoGetTxInIssuanceInfo(txHex string, index uint32) (entropy string, nonce
 
 /**
  * Get txout on confidential transaction.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: index         txin index
  * return: asset            asset
@@ -1032,7 +1011,6 @@ func CfdGoGetConfidentialTxOut(txHex string, index uint32) (asset string, satosh
 
 /**
  * Get txin count on confidential transaction.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * return: count        txin count
  * return: err          error
@@ -1052,7 +1030,6 @@ func CfdGoGetConfidentialTxInCount(txHex string) (count uint32, err error) {
 
 /**
  * Get witness stack count on confidential transaction input.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: txinIndex     txin index
  * return: count        witness stack count
@@ -1074,18 +1051,17 @@ func CfdGoGetConfidentialTxInWitnessCount(txHex string, txinIndex uint32) (count
 
 /**
  * Get witness stack count on confidential transaction input.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * param: txinIndex     txin index
  * return: count        witness stack count
  * return: err          error
  */
-func CfdGoGetConfidentialTxInPeginWitnessCount(handle uintptr, txHex string, txinIndex uint32) (count uint32, err error) {
-	cfdErrHandle, err := CfdGoCloneHandle(handle)
+func CfdGoGetConfidentialTxInPeginWitnessCount(txHex string, txinIndex uint32) (count uint32, err error) {
+	cfdErrHandle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
 	}
-	defer CfdGoCopyAndFreeHandle(handle, cfdErrHandle)
+	defer CfdGoFreeHandle(cfdErrHandle)
 
 	txinIndexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinIndex)))
 	countPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&count)))
@@ -1096,7 +1072,6 @@ func CfdGoGetConfidentialTxInPeginWitnessCount(handle uintptr, txHex string, txi
 
 /**
  * Get txout count on confidential transaction.
- * param: handle        cfd handle
  * param: txHex         transaction hex
  * return: count        txout count
  * return: err          error
@@ -1159,7 +1134,6 @@ func CfdGoGetConfidentialTxOutIndex(txHex string, address string, directLockingS
 
 /**
  * Set reissuance asset to confidential transaction.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1188,7 +1162,6 @@ func CfdGoSetRawReissueAsset(txHex string, txid string, vout uint32, assetSatosh
 
 /**
  * Get issuance blinding key.
- * param: handle               cfd handle
  * param: masterBlindingKey    master blinding key
  * param: txid                 utxo txid
  * param: vout                 utxo vout
@@ -1210,7 +1183,6 @@ func CfdGoGetIssuanceBlindingKey(masterBlindingKey string, txid string, vout uin
 
 /**
  * Get blind transaction handle.
- * param: handle               cfd handle
  * return: blindHandle         blindTx handle. release: CfdGoFreeBlindHandle
  * return: err                 error
  */
@@ -1228,7 +1200,6 @@ func CfdGoInitializeBlindTx() (blindHandle uintptr, err error) {
 
 /**
  * Add blind transaction txin data.
- * param: handle               cfd handle
  * param: blindHandle          blindTx handle
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1256,7 +1227,6 @@ func CfdGoAddBlindTxInData(blindHandle uintptr, txid string, vout uint32, asset 
 
 /**
  * Add blind transaction txout data.
- * param: handle               cfd handle
  * param: blindHandle          blindTx handle
  * param: index                txout index
  * param: confidentialKey      confidential key
@@ -1277,7 +1247,6 @@ func CfdGoAddBlindTxOutData(blindHandle uintptr, index uint32, confidentialKey s
 
 /**
  * Generate blind transaction.
- * param: handle               cfd handle
  * param: blindHandle          blindTx handle
  * param: txHex                transaction hex
  * return: outputTxHex         output transaction hex
@@ -1297,7 +1266,6 @@ func CfdGoFinalizeBlindTx(blindHandle uintptr, txHex string) (outputTxHex string
 
 /**
  * Free blind handle.
- * param: handle               cfd handle
  * param: blindHandle          blindTx handle
  * return: err                 error
  */
@@ -1315,7 +1283,6 @@ func CfdGoFreeBlindHandle(blindHandle uintptr) (err error) {
 
 /**
  * Add sign data to confidential transaction.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1340,7 +1307,6 @@ func CfdGoAddConfidentialTxSign(txHex string, txid string, vout uint32, isWitnes
 
 /**
  * Convert to der encode, and add sign data to confidential transaction.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1368,7 +1334,6 @@ func CfdGoAddConfidentialTxDerSign(txHex string, txid string, vout uint32, isWit
 /**
  * Add unlocking script to confidential transaction input by index.
  *   (prototype interface)
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: index                input index
  * param: isWitness            insert sign data to witness stack
@@ -1399,7 +1364,6 @@ func CfdGoAddConfidentialTxUnlockingScriptByIndex(txHex string, index uint32, is
 
 /**
  * Add unlocking script to confidential transaction input.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1440,7 +1404,6 @@ func CfdGoAddConfidentialTxUnlockingScript(txHex, txid string, vout uint32, isWi
 
 /**
  * Add multisig sign data to confidential transaction.
- * param: handle               cfd handle
  * param: multiSignHandle      multisig sign handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
@@ -1467,7 +1430,6 @@ func CfdGoFinalizeElementsMultisigSign(multiSignHandle uintptr, txHex string, tx
 
 /**
  * Create sighash from confidential transaction.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -1497,7 +1459,6 @@ func CfdGoCreateConfidentialSighash(txHex string, txid string, vout uint32, hash
 
 /**
  * Unblind txout on confidential transaction.
- * param: handle               cfd handle
  * param: txHex                transaction hex
  * param: index                txout index
  * param: blindingKey          blinding key
@@ -1523,7 +1484,6 @@ func CfdGoUnblindTxOut(txHex string, index uint32, blindingKey string) (asset st
 
 /**
  * Unblind txin issuance on confidential transaction.
- * param: handle                  cfd handle
  * param: txHex                   transaction hex
  * param: index                   txin index
  * param: assetBlindingKey        asset blinding key
@@ -1555,7 +1515,6 @@ func CfdGoUnblindIssuance(txHex string, index uint32, assetBlindingKey string, t
 
 /**
  * Generate multisig sign handle.
- * param: handle               cfd handle
  * return: multisigSignHandle  multisig sign handle. release: CfdGoFreeMultisigSignHandle
  * return: err                 error
  */
@@ -1573,7 +1532,6 @@ func CfdGoInitializeMultisigSign() (multisigSignHandle uintptr, err error) {
 
 /**
  * Add multisig sign data.
- * param: handle                  cfd handle
  * param: multisigSignHandle      multisig sign handle
  * param: signature            signature
  * param: relatedPubkey        signature related pubkey
@@ -1593,7 +1551,6 @@ func CfdGoAddMultisigSignData(multisigSignHandle uintptr, signature string, rela
 
 /**
  * Convert to der encode, and add multisig sign data.
- * param: handle               cfd handle
  * param: multisigSignHandle      multisig sign handle
  * param: signature            signature
  * param: sighashType          sighash type
@@ -1615,7 +1572,6 @@ func CfdGoAddMultisigSignDataToDer(multisigSignHandle uintptr, signature string,
 
 /**
  * Free multisig sign handle.
- * param: handle               cfd handle
  * param: multisigSignHandle   multisig sign handle
  * return: err                 error
  */
@@ -1633,7 +1589,6 @@ func CfdGoFreeMultisigSignHandle(multisigSignHandle uintptr) (err error) {
 
 /**
  * Create confidential address.
- * param: handle                cfd handle
  * param: address               address
  * param: confidentialKey       confidential key
  * return: confidentialAddress  confidential address
@@ -1653,7 +1608,6 @@ func CfdGoCreateConfidentialAddress(address string, confidentialKey string) (con
 
 /**
  * Get address and confidentialKey from confidentialAddress.
- * param: handle               cfd handle
  * param: confidentialAddress  confidential address
  * return: address             address
  * return: confidentialKey     confidential key
@@ -1675,7 +1629,6 @@ func CfdGoParseConfidentialAddress(confidentialAddress string) (address string, 
 
 /**
  * Calculate ec-signature from privkey.
- * param: handle               cfd handle
  * param: sighash              signatufe hash
  * param: privkeyHex           privkey hex (Specify either privkeyHex or privkeyWif)
  * param: privkeyWif           privkey WIF (Specify either privkeyHex or privkeyWif)
@@ -1698,7 +1651,6 @@ func CfdGoCalculateEcSignature(sighash string, privkeyHex string, privkeyWif str
 
 /**
  * Encode ec signature by der encoding.
- * param: handle                  cfd handle.
  * param: signature               compact format signature.
  * param: sighashType             sighash type.
  * param: sighash_anyone_can_pay  flag of signing only the current input.
@@ -1719,7 +1671,6 @@ func CfdGoEncodeSignatureByDer(signature string, sighashType int, sighash_anyone
 
 /**
  * Create key pair.
- * param: handle          cfd handle.
  * param: isCompress      pubkey compressed.
  * param: networkType     privkey wif network type.
  * return: pubkey         pubkey.
@@ -1741,7 +1692,6 @@ func CfdGoCreateKeyPair(isCompress bool, networkType int) (pubkey string, privke
 
 /**
  * Get privkey from WIF.
- * param: handle          cfd handle.
  * param: privkeyWif      privkey wif.
  * param: networkType     privkey wif network type.
  * return: privkeyHex     privkey hex.
@@ -1761,7 +1711,6 @@ func CfdGoGetPrivkeyFromWif(privkeyWif string, networkType int) (privkeyHex stri
 
 /**
  * Get privkey WIF from hex.
- * param: handle          cfd handle.
  * param: privkeyHex      privkey hex.
  * param: networkType     privkey wif network type.
  * param: isCompress      pubkey compressed.
@@ -1782,7 +1731,6 @@ func CfdGoGetPrivkeyWif(privkeyHex string, networkType int, isCompress bool) (pr
 
 /**
  * Parse privkey WIF data.
- * param: handle          cfd handle.
  * param: privkeyWif      privkey wif.
  * return: privkeyHex     privkey hex.
  * return: networkType    privkey wif network type.
@@ -1803,7 +1751,6 @@ func CfdGoParsePrivkeyWif(privkeyWif string) (privkeyHex string, networkType int
 
 /**
  * Get pubkey from privkey.
- * param: handle          cfd handle.
  * param: privkeyHex      privkey hex. (or privkeyWif)
  * param: privkeyWif      privkey wif. (or privkeyHex)
  * param: isCompress      pubkey compressed.
@@ -1824,7 +1771,6 @@ func CfdGoGetPubkeyFromPrivkey(privkeyHex string, privkeyWif string, isCompress 
 
 /**
  * Create extkey from seed.
- * param: handle          cfd handle.
  * param: seed            seed data(hex).
  * param: networkType     network type.
  * param: keyType         extkey type. (0: privkey, 1: pubkey)
@@ -1845,7 +1791,6 @@ func CfdGoCreateExtkeyFromSeed(seed string, networkType int, keyType int) (extke
 
 /**
  * Create extkey from parent path.
- * param: handle          cfd handle.
  * param: extkey          parent extkey.
  * param: path            bip32 key path.(ex: 0/0h/0'/0)
  * param: networkType     network type.
@@ -1867,7 +1812,6 @@ func CfdGoCreateExtkeyFromParentPath(extkey string, path string, networkType int
 
 /**
  * Create extpubkey from extprivkey.
- * param: handle          cfd handle.
  * param: extkey          ext privkey.
  * param: networkType     network type.
  * return: extPubkey      ext pubkey.
@@ -1887,7 +1831,6 @@ func CfdGoCreateExtPubkey(extkey string, networkType int) (extPubkey string, err
 
 /**
  * Get privkey from extprivkey.
- * param: handle          cfd handle.
  * param: extkey          ext privkey.
  * param: networkType     network type.
  * return: privkeyHex     privkey hex.
@@ -1908,7 +1851,6 @@ func CfdGoGetPrivkeyFromExtkey(extkey string, networkType int) (privkeyHex strin
 
 /**
  * Get pubkey from extkey.
- * param: handle          cfd handle.
  * param: extkey          extkey.
  * param: networkType     network type.
  * return: pubkey         pubkey.
@@ -1928,7 +1870,6 @@ func CfdGoGetPubkeyFromExtkey(extkey string, networkType int) (pubkey string, er
 
 /**
  * Get parent key path data.
- * param: handle             handle pointer.
  * param: parentExtkey       parent ext key string.
  * param: path               child path.
  * param: childExtkeyType    child key type. (see CfdDescriptorKeyType)
@@ -1967,7 +1908,6 @@ type CfdExtkeyData struct {
 
 /**
  * Get extkey information.
- * param: handle             handle pointer.
  * param: extkey             ext key string.
  * return: extkeyData        CfdExtkeyData
  * return: err               error
@@ -1989,7 +1929,6 @@ func CfdGoGetExtkeyInformation(
 
 /**
  * Parse script items from script.
- * param: handle          cfd handle.
  * param: script          script.
  * return: scriptItems    script items.
  * return: err            error
@@ -2030,7 +1969,6 @@ func CfdGoParseScript(script string) (scriptItems []string, err error) {
 
 /**
  * Convert script asm to hex.
- * param: handle          cfd handle.
  * param: scriptAsm       script assembly string.
  * return: script         hex encodeed script.
  * return: err            error
@@ -2052,7 +1990,6 @@ func CfdGoConvertScriptAsmToHex(scriptAsm string) (script string, err error) {
 
 /**
  * Create script from script items.
- * param: handle          cfd handle.
  * param: scriptItems     array of script element string.
  * return: script         hex encoded script.
  * return: err            error
@@ -2088,7 +2025,6 @@ type CfdMultisigSignData struct {
 
 /**
  * Create multisig scriptsig.
- * param: handle          cfd handle.
  * param: signItems       array of multisig sign data struct.
  * param: redeemScript    hex encoded multisig script.
  * return: scriptsig      hex encoded script.
@@ -2131,7 +2067,6 @@ func CfdGoCreateMultisigScriptSig(signItems []CfdMultisigSignData, redeemScript 
 
 /**
  * Set multisig scriptsig to locking script.
- * param: handle        cfd handle.
  * param: txHex         transaction hex
  * param: txid          txid
  * param: vout          vout
@@ -2199,7 +2134,6 @@ func CfdGoSetElementsMultisigScriptSig(txHex string, txid string, vout uint32, s
 /**
  * Verify signature in transaction input by index.
  *   (prototype interface)
- * param: handle                cfd handle.
  * param: txHex                 transaction hex.
  * param: signature             signature for input.
  * param: pubkey                pubkey hex.
@@ -2243,7 +2177,6 @@ func CfdGoVerifyConfidentialTxSignatureByIndex(
 
 /**
  * Verify signature in transaction input.
- * param: handle                cfd handle.
  * param: txHex                 transaction hex.
  * param: signature             signature for input.
  * param: pubkey                pubkey hex.
@@ -2290,7 +2223,6 @@ func CfdGoVerifyConfidentialTxSignature(
 
 /**
  * Normalize ec signature to low-s form
- * param: handle                 cfd handle
  * param: signature              ec signature to nomalize
  * return: normalizeSignature    normalized signature
  * return: err                   error
@@ -2490,7 +2422,6 @@ func CfdGoAddConfidentialTxMultisigSign(txHex string, txid string, vout uint32, 
 
 /**
  * Verify sign in transaction input.
- * param: handle               cfd handle.
  * param: txHex                transaction hex.
  * param: txid                 txin txid
  * param: vout                 txin vout
@@ -2739,7 +2670,7 @@ func CfdGoAddConfidentialTxOutputFee(createTxHandle uintptr, asset string, amoun
  * return: err             error
  */
 func CfdGoAddConfidentialTxOutputDestroyAmount(createTxHandle uintptr, asset string, amount int64) (err error) {
-	burnScript, err := CfdGoConvertScriptAsmToHex(uintptr(0), "OP_RETURN") // byte of OP_RETURN
+	burnScript, err := CfdGoConvertScriptAsmToHex("OP_RETURN") // byte of OP_RETURN
 	if err != nil {
 		return err
 	}
