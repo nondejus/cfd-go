@@ -2465,13 +2465,12 @@ type CfdOutputData struct {
 /**
  * Serialize transaction for ledger.
  * param: txHex                  transaction hex.
- * param: outputDataList         txout data list.
  * param: isAuthorization        authorization flag.
  * param: skipWitness            skip output witness flag.
- * return: serializeData         serialize data.
+ * return: serializeData         serialize data. (sha256 hash)
  * return: err                   error
  */
-func CfdGoSerializeTxForLedger(txHex string, outputDataList []CfdOutputData, isAuthorization bool, skipWitness bool) (serializeData string, err error) {
+func CfdGoSerializeTxForLedger(txHex string, isAuthorization bool, skipWitness bool) (serializeData string, err error) {
 	serializeData = ""
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -2485,21 +2484,6 @@ func CfdGoSerializeTxForLedger(txHex string, outputDataList []CfdOutputData, isA
 		return "", convertCfdError(ret, handle)
 	}
 	defer CfdFreeTxSerializeForLedger(handle, serializeHandle)
-
-	for i := 0; i < len(outputDataList); i++ {
-		var valueHex string
-		amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&outputDataList[i].Amount)))
-		ret = CfdGetConfidentialValueHex(handle, amountPtr, true, &valueHex)
-		if ret != (int)(KCfdSuccess) {
-			return "", convertCfdError(ret, handle)
-		}
-
-		indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&i)))
-		ret = CfdAddTxOutMetaDataForLedger(handle, serializeHandle, indexPtr, outputDataList[i].Asset, valueHex, "")
-		if ret != (int)(KCfdSuccess) {
-			return "", convertCfdError(ret, handle)
-		}
-	}
 
 	ret = CfdFinalizeTxSerializeForLedger(handle, serializeHandle, (int)(KCfdNetworkLiquidv1), txHex, skipWitness, isAuthorization, &serializeData)
 	err = convertCfdError(ret, handle)
