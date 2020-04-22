@@ -1,6 +1,8 @@
 package cfdgo
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -1467,6 +1469,7 @@ func TestCfdCoinSelectionUnuseFee(t *testing.T) {
 	option.LongTermFeeRate = 0
 	option.DustFeeRate = 0
 	option.KnapsackMinChange = 0
+	option.FeeAsset = assets[0]
 
 	selectUtxos, totalAmounts, utxoFee, err := CfdGoCoinSelection(utxos, targets, option)
 	assert.NoError(t, err)
@@ -1806,7 +1809,7 @@ func TestCfdGoSerializeTxForLedger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "3045022100dc0cdedb6f32a38898d9e2ebeb6227aecb0ae9c22d4d7fa476fec27a008f2569022045efd3a5460670cced0b07658807924ff28fbb38cd9d1489455a672b1567430101", derSignature)
 
-	derEncodedSignature := string([]rune(derSignature)[:len(derSignature) - 2])
+	derEncodedSignature := string([]rune(derSignature)[:len(derSignature)-2])
 	assert.Equal(t, "3045022100dc0cdedb6f32a38898d9e2ebeb6227aecb0ae9c22d4d7fa476fec27a008f2569022045efd3a5460670cced0b07658807924ff28fbb38cd9d1489455a672b15674301", derEncodedSignature)
 
 	fmt.Print("TestCfdGoSerializeTxForLedger test done.\n")
@@ -1978,6 +1981,88 @@ func TestCfdGoDecodeRawTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, jsonStr, expJsonStr)
 	fmt.Print("TestCfdGoDecodeRawTransaction test done.\n")
+}
+
+func TestDlcCombineMultipleMessages(t *testing.T) {
+	// Arrange
+	oraclePrivkey := "0000000000000000000000000000000000000000000000000000000000000001"
+	oraclePubkey, err := CfdGoGetPubkeyFromPrivkey(oraclePrivkey, "", true)
+	assert.NoError(t, err)
+	oracleKValues := []string{
+		"0000000000000000000000000000000000000000000000000000000000000002",
+		"0000000000000000000000000000000000000000000000000000000000000003",
+		"0000000000000000000000000000000000000000000000000000000000000004"}
+	oracleRPoints := []string{"", "", ""}
+	messages := []string{"W", "I", "F"}
+
+	localFundPrivkey := "0000000000000000000000000000000000000000000000000000000000000006"
+	localFundPubkey, err := CfdGoGetPubkeyFromPrivkey(localFundPrivkey, "", true)
+	assert.NoError(t, err)
+	localSweepPrivkey := "0000000000000000000000000000000000000000000000000000000000000006"
+	localSweepPubkey, err := CfdGoGetPubkeyFromPrivkey(localSweepPrivkey, "", true)
+	assert.NoError(t, err)
+
+	for i := 0; i < len(oracleKValues); i++ {
+		oracleRPoints[i], err = CfdGoGetSchnorrPublicNonce(oracleKValues[i])
+		assert.NoError(t, err)
+		if err != nil {
+			break
+		}
+	}
+
+	// Act
+	signatures := []string{"", "", ""}
+	for i := 0; i < len(oracleKValues); i++ {
+		hash := sha256.Sum256([]byte(messages[i]))
+		hashStr := hex.EncodeToString(hash[:])
+		signatures[i], err = CfdGoCalculateSchnorrSignatureWithNonce(oraclePrivkey, oracleKValues[i], hashStr)
+		assert.NoError(t, err)
+		if err != nil {
+			break
+		}
+	}
+
+	pubkeys := []string{"", "", ""}
+	for i := 0; i < len(pubkeys); i++ {
+		hash := sha256.Sum256([]byte(messages[i]))
+		hashStr := hex.EncodeToString(hash[:])
+		pubkeys[i], err = CfdGoGetSchnorrPubkey(oraclePubkey, oracleRPoints[i], hashStr)
+		assert.NoError(t, err)
+		if err != nil {
+			break
+		}
+	}
+
+	committedKey, err := CfdGoCombinePubkey(pubkeys)
+	assert.NoError(t, err)
+	combinePubkey, err := CfdGoCombinePubkeyPair(localFundPubkey, committedKey)
+	assert.NoError(t, err)
+
+	localSweepPubkeyBytes, _ := hex.DecodeString(localSweepPubkey)
+	hashedPrivkey := sha256.Sum256(localSweepPubkeyBytes)
+	hashedPrivkeyStr := hex.EncodeToString(hashedPrivkey[:])
+	hashPubkey, err := CfdGoGetPubkeyFromPrivkey(hashedPrivkeyStr, "", true)
+	combinedPubkey, err := CfdGoCombinePubkeyPair(combinePubkey, hashPubkey)
+	assert.NoError(t, err)
+
+	tweakedKey := localFundPrivkey
+	for i := 0; i < len(signatures); i++ {
+		tweakedKey, err = CfdGoPrivkeyTweakAdd(tweakedKey, signatures[i])
+		assert.NoError(t, err)
+		if err != nil {
+			break
+		}
+	}
+
+	// auto hashstr = HashUtil::Sha256(StringUtil::StringToByte(local_sweep_pubkey_str)).GetHex();
+	tweakPriv, err := CfdGoPrivkeyTweakAdd(tweakedKey, hashedPrivkeyStr)
+	assert.NoError(t, err)
+
+	tweakPub, err := CfdGoGetPubkeyFromPrivkey(tweakPriv, "", true)
+	assert.NoError(t, err)
+	// Assert
+	assert.Equal(t, tweakPub, combinedPubkey)
+	fmt.Print("TestDlcCombineMultipleMessages test done.\n")
 }
 
 func TestBlindLargeTx(t *testing.T) {
