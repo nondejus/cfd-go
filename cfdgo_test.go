@@ -4,12 +4,21 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// GetFuncName
+func GetFuncName() string {
+	pc, _, _, _ := runtime.Caller(1)
+	funcName := runtime.FuncForPC(pc).Name()
+	index := strings.LastIndex(funcName, ".")
+	return funcName[index+1:]
+}
 
 // first test
 func TestInitialize(t *testing.T) {
@@ -2062,7 +2071,36 @@ func TestDlcCombineMultipleMessages(t *testing.T) {
 	assert.NoError(t, err)
 	// Assert
 	assert.Equal(t, tweakPub, combinedPubkey)
-	fmt.Print("TestDlcCombineMultipleMessages test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestDlcSchnorrSignVerify(t *testing.T) {
+	// Arrange
+	data := "0000000000000000000000000000000000000000000000000000000000000000"
+	privkey := "0000000000000000000000000000000000000000000000000000000000000001"
+	pubkey := "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+	nonce := "0000000000000000000000000000000000000000000000000000000000000002"
+	bipSchnorrNonce := "58e8f2a1f78f0a591feb75aebecaaa81076e4290894b1c445cc32953604db089"
+
+	bipSchnorrNoncePubkey, err := CfdGoGetPubkeyFromPrivkey(bipSchnorrNonce, "", true)
+	assert.NoError(t, err)
+
+	// Act
+	sig1, err := CfdGoCalculateSchnorrSignatureWithNonce(privkey, nonce, data)
+	assert.NoError(t, err)
+	sig2, err := CfdGoCalculateSchnorrSignatureWithNonce(privkey, nonce, data)
+	assert.NoError(t, err)
+	sig3, err := CfdGoCalculateSchnorrSignatureWithNonce(privkey, bipSchnorrNonce, data)
+	assert.NoError(t, err)
+
+	isValid, err := CfdGoVerifySchnorrSignatureWithNonce(pubkey, bipSchnorrNoncePubkey, sig3, data)
+
+	// Assert
+	assert.Equal(t, sig1, sig2)
+	assert.NotEqual(t, sig1, sig3)
+	assert.Equal(t, "7031a98831859dc34dffeedda86831842ccd0079e1f92af177f7f22cc1dced05", sig3)
+	assert.True(t, isValid)
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestBlindLargeTx(t *testing.T) {
@@ -2073,7 +2111,7 @@ func TestBlindLargeTx(t *testing.T) {
 			return
 		}
 	}
-	fmt.Print("TestBlindLargeTx test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func BlindLargeTx(t *testing.T) (err error) {
