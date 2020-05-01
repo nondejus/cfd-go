@@ -804,16 +804,7 @@ func CfdGoUpdateConfidentialTxOut(txHex string, index uint32, asset string, sato
  * return: err                error
  */
 func CfdGoAddDestoryConfidentialTxOut(txHex string, asset string, satoshiAmount int64) (outputTxHex string, err error) {
-	handle, err := CfdGoCreateHandle()
-	if err != nil {
-		return
-	}
-	defer CfdGoFreeHandle(handle)
-
-	burnScript, err := CfdGoConvertScriptAsmToHex("OP_RETURN") // byte of OP_RETURN
-	satoshiPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
-	ret := CfdAddConfidentialTxOut(handle, txHex, asset, satoshiPtr, "", "", burnScript, "", &outputTxHex)
-	err = convertCfdError(ret, handle)
+	outputTxHex, err = CfdGoAddDestroyConfidentialTxOut(txHex, asset, satoshiAmount)
 	return outputTxHex, err
 }
 
@@ -1768,14 +1759,14 @@ func CfdGoGetPubkeyFromPrivkey(privkeyHex string, privkeyWif string, isCompress 
  * param: networkType     network type.
  * param: extkeyType      extkey type. (0: privkey, 1: pubkey)
  * param: fingerprint     fingerprint.
- * param: pubkey          pubkey.
+ * param: key             key.
  * param: chainCode       chain code.
  * param: depth           depth.
  * param: childNumber     child number. (0x80000000 over is hardened.)
  * return: extkey         extkey.
  * return: err            error
  */
-func CfdGoCreateExtkey(networkType int, extkeyType int, fingerprint string, pubkey string, chainCode string, depth byte, childNumber uint32) (extkey string, err error) {
+func CfdGoCreateExtkey(networkType int, extkeyType int, fingerprint string, key string, chainCode string, depth byte, childNumber uint32) (extkey string, err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
@@ -1783,7 +1774,7 @@ func CfdGoCreateExtkey(networkType int, extkeyType int, fingerprint string, pubk
 	defer CfdGoFreeHandle(handle)
 
 	childNumberPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&childNumber)))
-	ret := CfdCreateExtkey(handle, networkType, extkeyType, "", fingerprint, pubkey, chainCode, depth, childNumberPtr, &extkey)
+	ret := CfdCreateExtkey(handle, networkType, extkeyType, "", fingerprint, key, chainCode, depth, childNumberPtr, &extkey)
 	err = convertCfdError(ret, handle)
 	return extkey, err
 }
@@ -1793,14 +1784,14 @@ func CfdGoCreateExtkey(networkType int, extkeyType int, fingerprint string, pubk
  * param: networkType     network type.
  * param: extkeyType      extkey type. (0: privkey, 1: pubkey)
  * param: parentKey       parent key. (pubkey or privkey)
- * param: pubkey          pubkey.
+ * param: key             key. (pubkey or privkey)
  * param: chainCode       chain code.
  * param: depth           depth.
  * param: childNumber     child number. (0x80000000 over is hardened.)
  * return: extkey         extkey.
  * return: err            error
  */
-func CfdGoCreateExtkeyFromParent(networkType int, extkeyType int, parentKey string, pubkey string, chainCode string, depth byte, childNumber uint32) (extkey string, err error) {
+func CfdGoCreateExtkeyFromParent(networkType int, extkeyType int, parentKey string, key string, chainCode string, depth byte, childNumber uint32) (extkey string, err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
@@ -1808,7 +1799,7 @@ func CfdGoCreateExtkeyFromParent(networkType int, extkeyType int, parentKey stri
 	defer CfdGoFreeHandle(handle)
 
 	childNumberPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&childNumber)))
-	ret := CfdCreateExtkey(handle, networkType, extkeyType, parentKey, "", pubkey, chainCode, depth, childNumberPtr, &extkey)
+	ret := CfdCreateExtkey(handle, networkType, extkeyType, parentKey, "", key, chainCode, depth, childNumberPtr, &extkey)
 	err = convertCfdError(ret, handle)
 	return extkey, err
 }

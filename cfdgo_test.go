@@ -24,7 +24,7 @@ func GetFuncName() string {
 func TestInitialize(t *testing.T) {
 	ret := CfdInitialize()
 	assert.Equal(t, (int)(KCfdSuccess), ret)
-	fmt.Print("TestInitialize test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCreateHandle(t *testing.T) {
@@ -36,7 +36,7 @@ func TestCfdCreateHandle(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdCreateHandle test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGetLastError(t *testing.T) {
@@ -54,7 +54,7 @@ func TestCfdGetLastError(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGetLastError test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGetSupportedFunction(t *testing.T) {
@@ -67,7 +67,7 @@ func TestCfdGetSupportedFunction(t *testing.T) {
 
 	err = CfdGoFreeHandle(handle)
 	assert.NoError(t, err)
-	fmt.Print("TestCfdGetSupportedFunction test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoCreateAddress(t *testing.T) {
@@ -120,7 +120,7 @@ func TestCfdGoCreateAddress(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGoCreateAddress test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoCreateMultisigScript(t *testing.T) {
@@ -136,7 +136,7 @@ func TestCfdGoCreateMultisigScript(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGoCreateMultisigScript test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoGetAddressesFromMultisig(t *testing.T) {
@@ -159,7 +159,7 @@ func TestCfdGoGetAddressesFromMultisig(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGoGetAddressesFromMultisig test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoGetAddressFromLockingScript(t *testing.T) {
@@ -184,7 +184,7 @@ func TestCfdGoGetAddressFromLockingScript(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "ex1qsl9shsrauk6malt4vkevv0a3dq00mzhhhkz68u8e3fff5hzs5sms77zw4m", address)
 
-	fmt.Print("TestCfdGoGetAddressesFromMultisig test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoGetAddressInfo(t *testing.T) {
@@ -242,6 +242,8 @@ func TestCfdGoGetAddressInfo(t *testing.T) {
 	assert.Equal(t, (int)(KCfdP2wsh), info.HashType)
 	assert.Equal(t, (int)(KCfdWitnessVersion0), info.WitnessVersion)
 	assert.Equal(t, "0020d2fa4bd23f2f8178792329cc7dc11b99d5940569b86c49d22cb2d4af8cd07097", info.LockingScript)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoParseDescriptor(t *testing.T) {
@@ -362,7 +364,7 @@ func TestCfdGoParseDescriptor(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGoParseDescriptor test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoCreateDescriptor(t *testing.T) {
@@ -395,6 +397,8 @@ func TestCfdGoCreateDescriptor(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, descriptor+"#ek3mykpf", outputDescriptor)
 	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCreateRawTransaction(t *testing.T) {
@@ -452,7 +456,7 @@ func TestCfdCreateRawTransaction(t *testing.T) {
 	}
 
 	if err == nil {
-		txHex, err = CfdGoAddDestoryConfidentialTxOut(
+		txHex, err = CfdGoAddDestroyConfidentialTxOut(
 			txHex,
 			"ef47c42d34de1b06a02212e8061323f50d5f02ceed202f1cb375932aa299f751",
 			int64(50000000))
@@ -460,11 +464,17 @@ func TestCfdCreateRawTransaction(t *testing.T) {
 		assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff040151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a12000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a00000000", txHex)
 	}
 
+	if err == nil {
+		txHex, err = CfdGoUpdateConfidentialTxOut(txHex, uint32(2), "6f1a4b6bd5571b5f08ab79c314dc6483f9b952af2f5ef206cd6f8e68eb1186f3", int64(1000000), "", "", "", "")
+		assert.NoError(t, err)
+		assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff040151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f0100000000000f424000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a00000000", txHex)
+	}
+
 	if err != nil {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdCreateRawTransaction test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCreateRawTransaction2(t *testing.T) {
@@ -529,7 +539,27 @@ func TestCfdCreateRawTransaction2(t *testing.T) {
 		assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff040151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a12000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a00000000", txHex)
 	}
 
-	fmt.Print("TestCfdCreateRawTransaction2 test done.\n")
+	if err == nil {
+		handle2, err := CfdGoInitializeConfidentialTransactionByHex("020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff040151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a12000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a00000000")
+		assert.NoError(t, err)
+		defer CfdGoFreeTransactionHandle(handle2)
+
+		if err == nil {
+			err = CfdGoAddConfidentialTxOutputByScript(
+				handle2,
+				"6f1a4b6bd5571b5f08ab79c314dc6483f9b952af2f5ef206cd6f8e68eb1186f3",
+				int64(10000),
+				"0014eb3c0d55b7098a4aef4a18ee1eebcb1ed924a82b")
+			assert.NoError(t, err)
+		}
+		if err == nil {
+			txHex, err := CfdGoFinalizeTransaction(handle2)
+			assert.NoError(t, err)
+			assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff050151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a12000000151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000002faf08000016a01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000000271000160014eb3c0d55b7098a4aef4a18ee1eebcb1ed924a82b00000000", txHex)
+		}
+	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGetTransaction(t *testing.T) {
@@ -611,7 +641,7 @@ func TestCfdGetTransaction(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGetTransaction test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdSetRawReissueAsset(t *testing.T) {
@@ -632,7 +662,7 @@ func TestCfdSetRawReissueAsset(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdSetRawReissueAsset test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGetIssuanceBlindingKey(t *testing.T) {
@@ -646,7 +676,7 @@ func TestCfdGetIssuanceBlindingKey(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdGetIssuanceBlindingKey test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdBlindTransaction(t *testing.T) {
@@ -775,7 +805,7 @@ func TestCfdBlindTransaction(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdBlindTransaction test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdAddSignConfidentialTx(t *testing.T) {
@@ -828,7 +858,7 @@ func TestCfdAddSignConfidentialTx(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdAddSignConfidentialTx test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdAddSignConfidentialTxPkh(t *testing.T) {
@@ -869,7 +899,7 @@ func TestCfdAddSignConfidentialTxPkh(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a157000000006a47304402204c5f91208f79fe7c74a2b5d88573b6150ac1d4f18cef8051dff1260a37c272d802201b97ecd5f83d16cfc3cb39d9bdd21d1f77665135c4230a3157d2045450528ff5012103f942716865bb9b62678d99aa34de4632249d066d99de2b5a2e542e54908450d6ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000", txHex)
 
-	fmt.Print("TestCfdAddSignConfidentialTxPkh test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2PKH(t *testing.T) {
@@ -885,7 +915,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2PKH(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, txHexByInput, txHexByIndex)
 
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2PKH test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
@@ -897,7 +927,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2MS(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "020000000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b0617400000000d900473044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb01473044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb0147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52aeffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff030151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a120000000000000", txHexByInput)
 
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2MS test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
@@ -918,7 +948,7 @@ func TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "020000000102bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b0617400000000220020fc5acc302aab97f821f9a61e1cc572e7968a603551e95d4ba12b51df6581482fffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff030151f799a22a9375b31c2f20edce025f0df5231306e81222a0061bde342dc447ef010000000005f5e10003a630456ab6d50b57981e085abced70e2816289ae2b49a44c2f471b205134c12b1976a914d08f5ba8874d36cf97d19379b370f1f23ba36d5888ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000071475420001976a914fdd725970db682de970e7669646ed7afb8348ea188ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a1200000000000000000040100473044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb01473044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb0147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae0000000000000000000000", txHexResult)
 
-	fmt.Print("TestCfdGoAddConfidentialTxUnlockingScript_P2SHP2WPKH test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
@@ -967,8 +997,10 @@ func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
 			sighash, "", privkey2, networkType, true)
 		assert.NoError(t, err)
 
-		err = CfdGoAddMultisigSignDataToDer(
-			multiSignHandle, signature2, sigHashType, false, pubkey2)
+		derSignature2, err := CfdGoEncodeSignatureByDer(signature2, sigHashType, false)
+		assert.NoError(t, err)
+
+		err = CfdGoAddMultisigSignData(multiSignHandle, derSignature2, pubkey2)
 		assert.NoError(t, err)
 
 		// generate
@@ -985,7 +1017,7 @@ func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdAddMultisigSignConfidentialTx test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdAddMultisigSignConfidentialTxWitness(t *testing.T) {
@@ -1053,7 +1085,7 @@ func TestCfdAddMultisigSignConfidentialTxWitness(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdAddMultisigSignConfidentialTxWitness test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdSetElementsMultisigScriptSig(t *testing.T) {
@@ -1112,7 +1144,7 @@ func TestCfdSetElementsMultisigScriptSig(t *testing.T) {
 		assert.Equal(t, "CFD Error: message=[Unsupported hashType.], code=[1]", err.Error())
 	}
 
-	fmt.Print("TestCfdSetElementsMultisigScriptSig test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdAddSignConfidentialTxOpCode(t *testing.T) {
@@ -1158,7 +1190,7 @@ func TestCfdAddSignConfidentialTxOpCode(t *testing.T) {
 
 	assert.Equal(t, "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a15700000000d90047304402206fc4cc7e489208a2f4d24f5d35466debab2ce7aa34b5d00e0a9426c9d63529cf02202ec744939ef0b4b629c7d87bc2d017714b52bb86dccb0fd0f10148f62b7a09ba01473044022073ea24720b24c736bcb305a5de2fd8117ca2f0a85d7da378fae5b90dc361d227022004c0088bf1b73a56ae5ec407cf9c330d7206ffbcd0c9bb1c72661726fd4990390147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52aeffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000", txHex)
 
-	fmt.Print("TestCfdAddSignConfidentialTxOpCode test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdConfidentialAddress(t *testing.T) {
@@ -1181,7 +1213,7 @@ func TestCfdConfidentialAddress(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdConfidentialAddress test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCalculateEcSignature(t *testing.T) {
@@ -1198,7 +1230,7 @@ func TestCfdCalculateEcSignature(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdCalculateEcSignature test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdPrivkeyAndPubkey(t *testing.T) {
@@ -1259,7 +1291,7 @@ func TestCfdPrivkeyAndPubkey(t *testing.T) {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdPrivkeyAndPubkey test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdExtkey(t *testing.T) {
@@ -1301,11 +1333,20 @@ func TestCfdExtkey(t *testing.T) {
 		assert.Equal(t, (uint32)(2147483692), data.ChildNumber)
 	}
 
+	extkey, err := CfdGoCreateExtkey(int(KCfdNetworkMainnet), int(KCfdExtPrivkey), "03af54a0", "a0467585c122e8c2c59d2a10dbe073533cbe887758b05c23f281c9bf873998f6", "16ddac07d3c3110f0292136af4bc476323e87b6da49ac0b8eef5bcde17e8a672", byte(1), uint32(2147483692))
+	assert.NoError(t, err)
+	assert.Equal(t, "xprv9tviYANkXM1CY831VtMFKFn6LP6aMHf1kvtCZyTL9YbyMwTR2BSmJaEoqw59BZdQhLSx9ZxyKsRUeCetxA2xZ34eupBqZUsifnWyLJJ16j3", extkey)
+
+	// xprv9xhdg2NYoNDWJ2EaCaAafhgm7BenUsEjqM4PrG5wuPvTM7jvo1bL5dXwj8TCwiB1A52bKk5N78xQ3hFVBTYxRxLfEm2po5RyQNaFy2kPXZ4/0h/0h/2
+	extkey, err = CfdGoCreateExtkeyFromParent(int(KCfdNetworkMainnet), int(KCfdExtPubkey), "03459e03adb3c86131f9d9d35b299cd2c45638bb77c3fa8d1da16b2b5a16a71067", "031d7463018f867de51a27db866f869ceaf52abab71827a6051bab8a0fd020f4c1", "a3d58c40ac9c588529edb6cf9576241a6c2c919843bd97c3c26b35538d91a292", byte(4), uint32(2))
+	assert.NoError(t, err)
+	assert.Equal(t, "xpub6EXtjFtcPwmae296sZGckBgbfCHnodfjWujbGK7hhzRybmWJhmgeusFbiiZyG1iSeiBcQ7diPeUC9vtP9wLS44bWpqH4kuQQD5N4gA3LaFE", extkey)
+
 	if err != nil {
 		fmt.Print("[error message] " + err.Error() + "\n")
 	}
 
-	fmt.Print("TestCfdExtkey test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdParseScript(t *testing.T) {
@@ -1330,7 +1371,7 @@ func TestCfdParseScript(t *testing.T) {
 		assert.Equal(t, "038f5d4ee5a661c04de7b715c6b9ac935456419fa9f484470275d1d489f2793301", items[1])
 	})
 
-	fmt.Print("TestCfdParseScript test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdEncodeSignatureToDer(t *testing.T) {
@@ -1340,7 +1381,13 @@ func TestCfdEncodeSignatureToDer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, derSignature, "3044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb01")
 
-	fmt.Print("TestCfdEncodeSignatureToDer test done.\n")
+	sig, sighash, anyoneCanPay, err := CfdGoDecodeSignatureFromDer(derSignature)
+	assert.NoError(t, err)
+	assert.Equal(t, signature, sig)
+	assert.Equal(t, int(KCfdSigHashAll), sighash)
+	assert.Equal(t, false, anyoneCanPay)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoCreateScript(t *testing.T) {
@@ -1372,6 +1419,8 @@ func TestCfdGoCreateScript(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, script, scriptHex)
 	})
+
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCreateMultisigScriptSig(t *testing.T) {
@@ -1407,7 +1456,7 @@ func TestCfdCreateMultisigScriptSig(t *testing.T) {
 		assert.Equal(t, "522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae", items[3])
 	}
 
-	fmt.Print("TestCfdCreateMultisigScriptSig test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCoinSelection(t *testing.T) {
@@ -1453,7 +1502,7 @@ func TestCfdCoinSelection(t *testing.T) {
 		assert.Equal(t, targets[2].Asset, totalAmounts[2].Asset)
 	}
 
-	fmt.Print("TestCfdCoinSelection test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdCoinSelectionUnuseFee(t *testing.T) {
@@ -1502,7 +1551,7 @@ func TestCfdCoinSelectionUnuseFee(t *testing.T) {
 		assert.Equal(t, targets[2].Asset, totalAmounts[2].Asset)
 	}
 
-	fmt.Print("TestCfdCoinSelectionUnuseFee test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func GetCoinSelectionTestData() (assets []string, utxos []CfdUtxo) {
@@ -1628,7 +1677,7 @@ func TestCfdGoEstimateFee(t *testing.T) {
 		assert.Equal(t, int64(11540), inputFee)
 	})
 
-	fmt.Print("TestCfdGoEstimateFee test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func GetEstimateFeeTestData() (assets []string, inputs []CfdEstimateFeeInput) {
@@ -1784,7 +1833,7 @@ func TestCfdGoVerifyConfidentialTxSignature(t *testing.T) {
 		assert.True(t, result)
 	})
 
-	fmt.Print("TestCfdGoVerifyConfidentialTxSignature test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoNormalizeSignature(t *testing.T) {
@@ -1796,7 +1845,7 @@ func TestCfdGoNormalizeSignature(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSig, normalized)
 
-	fmt.Print("TestCfdGoNormalizeSignature test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoSerializeTxForLedger(t *testing.T) {
@@ -1821,7 +1870,7 @@ func TestCfdGoSerializeTxForLedger(t *testing.T) {
 	derEncodedSignature := string([]rune(derSignature)[:len(derSignature)-2])
 	assert.Equal(t, "3045022100f5f7818496d20de9666b5614f5a900a1024171de5cea10523c6966d4f6eac42302200099c96123c6453ec8c04671926789859ef12df2bae274936ce5b2023882234c", derEncodedSignature)
 
-	fmt.Print("TestCfdGoSerializeTxForLedger test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxSignWithPrivkey(t *testing.T) {
@@ -1846,7 +1895,7 @@ func TestCfdGoAddConfidentialTxSignWithPrivkey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, pubkey, stackData)
 
-	fmt.Print("TestCfdGoAddConfidentialTxSignWithPrivkey test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxPubkeyHashSign(t *testing.T) {
@@ -1901,7 +1950,7 @@ func TestCfdGoAddConfidentialTxPubkeyHashSign(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, pubkey, stackData)
 
-	fmt.Print("TestCfdGoAddConfidentialTxPubkeyHashSign test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
@@ -1979,7 +2028,7 @@ func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
 		assert.Equal(t, true, isVerify)
 	}
 
-	fmt.Print("TestCfdGoAddConfidentialTxMultisigSign test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestCfdGoDecodeRawTransaction(t *testing.T) {
@@ -1989,7 +2038,7 @@ func TestCfdGoDecodeRawTransaction(t *testing.T) {
 	jsonStr, err := CfdGoDecodeRawTransactionJson(txHex, "mainnet", true)
 	assert.NoError(t, err)
 	assert.Equal(t, jsonStr, expJsonStr)
-	fmt.Print("TestCfdGoDecodeRawTransaction test done.\n")
+	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
 func TestDlcCombineMultipleMessages(t *testing.T) {
@@ -2100,6 +2149,198 @@ func TestDlcSchnorrSignVerify(t *testing.T) {
 	assert.NotEqual(t, sig1, sig3)
 	assert.Equal(t, "7031a98831859dc34dffeedda86831842ccd0079e1f92af177f7f22cc1dced05", sig3)
 	assert.True(t, isValid)
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestPeginTx(t *testing.T) {
+	peginTx := "0200000001017926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f30000004000ffffffff020125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000002540ba97c0017a91414b71442e11941fd7807a82eabee13d6ec171ed9870125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000003a84000000000000000000060800e40b54020000002025b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a2006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f16001412dcdeef890f60967896391c95b0e02c9258dfe5fdda060200000000010a945efd42ce42de413aa7398a95c35facc14ec5d35bb23e5f980014e94ab96a620000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe50b46ecadb5cc52a7ef149a23323464353415f02d7b4a943963b26a9beb2a030000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff67173609ca4c13662356a2507c71e5d497baeff56a3c42af989f3b270bc870560000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff784a9fd151fe2808949fae18afcf52244a77702b9a83950bc7ec52a8239104850000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff259618278cecbae1bed8b7806133d14987c3c6118d2744707f509c58ea2c0e870000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff5c30c2fdcb6ce0b666120777ec18ce5211dd4741f40f033648432694b0919da50000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbb0f857d4b143c74c7fdb678bf41b65e7e3f2e7644b3613ae6370d21c0882ad60000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbce488c283e07bf364edb5057e020aa3d137d8d6130711dc12f03f35564945680000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff258cb927989780ac92a3952ffd1f54e9b65e59fb07219eb106840b5d76b547fb0000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe98ec686efbca9bdd18ae85a3a8235a607e1cfb6138bac1461d400cbbabbe00f0000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffff0100e40b540200000017a91472c44f957fc011d97e3406667dca5b1c930c4026870247304402206b4de54956e864dfe3ff3a4957e329cf171e919498bb8f98c242bef7b0d5e3350220505355401a500aabf193b93492d6bceb93c3b183034f252d65a139245c7486a601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402200fc48c7b5bd6de74c951250c60e8e6c9d3a605dc557bdc93ce86e85d2f27834a02205d2a8768adad669683416d1126c8537ab1eb36b0e83d5d9e6a583297b7f9d2cb01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402207ad97500fbe6049d559a1e10586cd0b1f02baeb98dc641a971a506a57288aa0002202a6646bc4262904f6d1a9288c12ff586b5a674f5a351dfaba2698c8b8265366f01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f4024730440220271e41a1e8f953b6817333e43d6a5e2924b291d52120011a5f7f1fb8049ae41b02200f1a25ed9da813122caadf8edf8d01da190f9407c2b61c27d4b671e07136bce701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022050291184dcd4733de6e6a43d9efb1e21e7d2c563e9138481f04010f3acbb139f02206c01c3bfe4e5b71c4aac524a18f35e25ae7306ca110b3c3b079ae6da2b0a0a5701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022045a188c10aec4f1a3a6c8a3a3c9f7d4dc63b9eacc011839c907d1c5da206a1390220399ca60516204efd9d220eaa0c804867137133c4d70780223fdde699288af3790121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d7802473044022053621a5c74b313c648d179041c154152372060941d9c9080340eb913358b705602201ac178f639360356ca7d75656d92bd7801d976e74bd5d2e30d6310a94940d0bc0121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d780247304402207b4a7a271a8fc03e8045ca367cb64046fa06e5b13a105e67efe7dd6571503fcb022072852e1c3f87eeac039601a0df855fb5d65bbdcd3ad95ff96bfc7b534fd89f7601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022037e9f0943a79e155a57526e251cfd39e004552b76c0de892448eb939d2d12fdf02203a02f0045e8f90739eddc06c026c95b4a653aeb89528d851ab75952fd7db07b801210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022057a9953ba83d5e710fc64e1c533d81b0913f434b3e1c865cebd6cb106e09fa77022012930afe63ae7f1115a2f3b13039e71387fc2d4ed0e36eaa7be55a754c8c84830121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d78130e00009700000020fe3b574c1ce6d5cb68fc518e86f7976e599fafc0a2e5754aace7ca16d97a7c78ef9325b8d4f0a4921e060fc5e71435f46a18fa339688142cd4b028c8488c9f8dd1495b5dffff7f200200000002000000024a180a6822abffc3b1080c49016899c6dac25083936df14af12f58db11958ef27926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f3010500000000"
+
+	stackData, err := CfdGoGetConfidentialTxInPeginWitness(peginTx, uint32(0), uint32(1))
+	assert.NoError(t, err)
+	assert.Equal(t, "25b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a", stackData)
+
+	count, err := CfdGoGetConfidentialTxInPeginWitnessCount(peginTx, uint32(0))
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(6), count)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestMnemonic(t *testing.T) {
+	mnemonicList, err := CfdGoGetMnemonicWordList("en")
+	assert.NoError(t, err)
+	assert.Equal(t, 2048, len(mnemonicList))
+	assert.Equal(t, "ability", mnemonicList[1])
+
+	mnemonicJaList, err := CfdGoGetMnemonicWordList("jp")
+	assert.NoError(t, err)
+	assert.Equal(t, 2048, len(mnemonicJaList))
+	if len(mnemonicJaList) > 1 {
+		assert.Equal(t, "あいさつ", mnemonicJaList[1])
+	}
+
+	mnemonicWords := []string {
+		"gauge",
+		"believe",
+		"rebel",
+		"shuffle",
+		"gather",
+		"cement",
+		"boat",
+		"priority",
+		"broken",
+		"infant",
+		"vague",
+		"poet"}
+	seed1, entropy1, err := CfdGoConvertMnemonicWordsToSeed(mnemonicWords, "abcde", "en")
+	assert.NoError(t, err)
+	assert.Equal(t, "ea0c8a588f31f31131da01565d398f596764b2b6d085eaef061b61fd13ae398b811335330b9ae203503a5ca82dcd5e9da3aaaa6c71fc6b38951ff4ea41531c5b", seed1)
+	assert.Equal(t, "608296cce3b6064a4635571c8e6bc2d3", entropy1)
+
+	mnemonic := "horn tenant knee talent sponsor spell gate clip pulse soap slush warm silver nephew swap uncle crack brave"
+	seed, entropy, err := CfdGoConvertMnemonicToSeed(mnemonic, "TREZOR", "en")
+	assert.NoError(t, err)
+	assert.Equal(t, "fd579828af3da1d32544ce4db5c73d53fc8acc4ddb1e3b251a31179cdb71e853c56d2fcb11aed39898ce6c34b10b5382772db8796e52837b54468aeb312cfc3d", seed)
+	assert.Equal(t, "6d9be1ee6ebd27a258115aad99b7317b9c8d28b6d76431c3", entropy)
+
+	tempMnemonic, err := CfdGoConvertEntropyToMnemonic(entropy, "en")
+	assert.NoError(t, err)
+	assert.Equal(t, mnemonic, tempMnemonic)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestCreateRawTransactionBitcoin(t *testing.T) {
+	handle, err := CfdGoInitializeTransaction(uint32(2), uint32(0))
+	assert.NoError(t, err)
+	defer CfdGoFreeTransactionHandle(handle)
+
+	sequence := uint32(0xffffffff)
+	if err == nil {
+		err = CfdGoAddTxInput(
+			handle,
+			"7461b02405414d79e79a5050684a333c922c1136f4bdff5fb94b551394edebbd", 0,
+			sequence)
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddTxInput(
+			handle,
+			"1497e1f146bc5fe00b6268ea16a7069ecb90a2a41a183446d5df8965d2356dc1", 1,
+			sequence)
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		err = CfdGoAddTxOutput(
+			handle,
+			int64(100000000),
+			"bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
+		assert.NoError(t, err)
+	}
+
+	if err == nil {
+		txHex, err := CfdGoFinalizeTransaction(handle)
+		assert.NoError(t, err)
+		assert.Equal(t, "0200000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0100e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd600000000", txHex)
+	}
+
+	if err == nil {
+		handle2, err := CfdGoInitializeTransactionByHex("0200000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0100e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd600000000")
+		assert.NoError(t, err)
+		defer CfdGoFreeTransactionHandle(handle2)
+
+		if err == nil {
+			// 03d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b
+			err = CfdGoAddTxOutputByScript(
+				handle2,
+				int64(1900500000),
+				"00144dc2412fe3dc759e3830b6fb360264c8ce0abe38")
+			assert.NoError(t, err)
+		}
+
+		if err == nil {
+			txHex, err := CfdGoFinalizeTransaction(handle2)
+			assert.NoError(t, err)
+			assert.Equal(t, "0200000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0200e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd620544771000000001600144dc2412fe3dc759e3830b6fb360264c8ce0abe3800000000", txHex)
+		}
+	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestSignTransactionBitcoin(t *testing.T) {
+	tx := "0200000002bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0200e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd620544771000000001600144dc2412fe3dc759e3830b6fb360264c8ce0abe3800000000"
+
+	// pubkey: '03d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b',
+	// privkey: 'cUCCL2wBhCHVwiRpfUVd1rjWUSB4QCnGBczhCW5neLFTQkxZimeG'
+	pubkey := "03d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b"
+	privkey := "cUCCL2wBhCHVwiRpfUVd1rjWUSB4QCnGBczhCW5neLFTQkxZimeG"
+	sighash, err := CfdGoCreateSighash(int(KCfdNetworkMainnet), tx, "7461b02405414d79e79a5050684a333c922c1136f4bdff5fb94b551394edebbd", uint32(0), int(KCfdP2wpkh), pubkey, "", int64(10000000), int(KCfdSigHashAll), false)
+	assert.NoError(t, err)
+	assert.Equal(t, "bd5860257b18c95444cc64c36efcfe665c998659eced56280550bd5b063ab8a5", sighash)
+
+	txHex, err := CfdGoAddTxSignWithPrivkey(int(KCfdNetworkMainnet), tx, "7461b02405414d79e79a5050684a333c922c1136f4bdff5fb94b551394edebbd", uint32(0), int(KCfdP2wpkh), pubkey, privkey, int64(10000000), int(KCfdSigHashAll), false, true)
+	assert.NoError(t, err)
+	assert.Equal(t, "02000000000102bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0200e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd620544771000000001600144dc2412fe3dc759e3830b6fb360264c8ce0abe3802473044022047df4e3d86faa587bdeecb15e9d140956dd6e5c58917cd158d08cf62c1b495ad022010b828d155010188ecaaa8110a48c2dd13d69d7ae620d3926632a004a82483d6012103d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b0000000000", txHex)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestGetTransactionBitcoin(t *testing.T) {
+	tx := "02000000000102bdebed9413554bb95fffbdf436112c923c334a6850509ae7794d410524b061740000000000ffffffffc16d35d26589dfd54634181aa4a290cb9e06a716ea68620be05fbc46f1e197140100000000ffffffff0200e1f50500000000160014751e76e8199196d454941c45d1b3a323f1433bd620544771000000001600144dc2412fe3dc759e3830b6fb360264c8ce0abe3802473044022047df4e3d86faa587bdeecb15e9d140956dd6e5c58917cd158d08cf62c1b495ad022010b828d155010188ecaaa8110a48c2dd13d69d7ae620d3926632a004a82483d6012103d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b0000000000"
+	network := int(KCfdNetworkMainnet)
+	data, err := CfdGoGetTxInfo(network, tx)
+	assert.NoError(t, err)
+	assert.Equal(t, "e05d74e44d51171f71d3babe67c630a8d9c865d602c91998ec8f27ab21c75150", data.Txid)
+	assert.Equal(t, "ef936bd43061ab4468ba15618d48c01bd1e4457914c261e90c0dd8f5a6f38741", data.Wtxid)
+	assert.Equal(t, uint32(264), data.Size)
+	assert.Equal(t, uint32(182), data.Vsize)
+	assert.Equal(t, uint32(726), data.Weight)
+	assert.Equal(t, uint32(2), data.Version)
+	assert.Equal(t, uint32(0), data.LockTime)
+
+	txid, vout, sequence, scriptSig, err := CfdGoGetTxIn(network, tx, uint32(0))
+	assert.NoError(t, err)
+	assert.Equal(t, "7461b02405414d79e79a5050684a333c922c1136f4bdff5fb94b551394edebbd", txid)
+	assert.Equal(t, uint32(0), vout)
+	assert.Equal(t, uint32(4294967295), sequence)
+	assert.Equal(t, "", scriptSig)
+
+	stackData, err := CfdGoGetTxInWitness(network, tx, uint32(0), uint32(1))
+	assert.NoError(t, err)
+	assert.Equal(t, "03d34d21d3017acdfb033e010574fb73dc83639f97145d83965fe1b19a4c8e2b6b", stackData)
+
+	satoshiAmount, lockingScript, err := CfdGoGetTxOut(network, tx, uint32(1))
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1900500000), satoshiAmount)
+	assert.Equal(t, "00144dc2412fe3dc759e3830b6fb360264c8ce0abe38", lockingScript)
+
+	inCount, err := CfdGoGetTxInCount(network, tx)
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(2), inCount)
+
+	witnessCount, err := CfdGoGetTxInWitnessCount(network, tx, uint32(0))
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(2), witnessCount)
+
+	outCount, err := CfdGoGetTxOutCount(network, tx)
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(2), outCount)
+
+	txinIndex, err := CfdGoGetTxInIndex(network, tx, "1497e1f146bc5fe00b6268ea16a7069ecb90a2a41a183446d5df8965d2356dc1", uint32(1))
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(1), txinIndex)
+
+	txoutIndex1, err := CfdGoGetTxOutIndex(network, tx, "bc1qfhpyztlrm36euwpskmanvqnyer8q403cnzfn9t", "")
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(1), txoutIndex1)
+
+	txoutIndex2, err := CfdGoGetTxOutIndex(network, tx, "", "0014751e76e8199196d454941c45d1b3a323f1433bd6")
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(0), txoutIndex2)
+
 	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
