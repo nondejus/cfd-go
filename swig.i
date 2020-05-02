@@ -2988,7 +2988,7 @@ func CfdGoPubkeyTweakMul(pubkey string, tweak string) (tweakedPubkey string, err
  * return: negatePubkey       negate pubkey.
  * return: err                error
  */
-func CfdGoNegatePubkey(pubkey string, tweak string) (negatePubkey string, err error) {
+func CfdGoNegatePubkey(pubkey string) (negatePubkey string, err error) {
 	negatePubkey = ""
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -3047,7 +3047,7 @@ func CfdGoPrivkeyTweakMul(privkey string, tweak string) (tweakedPrivkey string, 
  * return: negatePrivkey      negate privkey.
  * return: err                error
  */
-func CfdGoNegatePrivkey(privkey string, tweak string) (negatePrivkey string, err error) {
+func CfdGoNegatePrivkey(privkey string) (negatePrivkey string, err error) {
 	negatePrivkey = ""
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
@@ -3569,6 +3569,7 @@ type CfdFundRawTxTargetAmount struct {
 func NewCfdFundRawTxOption(networkType int) CfdFundRawTxOption {
 	option := CfdFundRawTxOption{}
 	if networkType == int(KCfdNetworkLiquidv1) || networkType == int(KCfdNetworkElementsRegtest) {
+		option.FeeAsset = "0000000000000000000000000000000000000000000000000000000000000000"
 		option.IsBlindTx = true
 		option.EffectiveFeeRate = float64(0.1)
 		option.LongTermFeeRate = float64(-1.0)
@@ -3598,9 +3599,13 @@ func NewCfdFundRawTxOption(networkType int) CfdFundRawTxOption {
  * return: err               error
  */
 func CfdGoFundRawTransactionBtc(txHex string, txinList []CfdUtxo, utxoList []CfdUtxo, targetAmount int64, reservedAddress string, option *CfdFundRawTxOption) (outputTx string, fee int64, usedAddressList []string, err error) {
-	targetAmountList := make([]CfdFundRawTxTargetAmount, 0, 1)
-	targetAmountList[0].Amount = targetAmount
-	targetAmountList[0].ReservedAddress = reservedAddress
+	targetAmountList := []CfdFundRawTxTargetAmount{
+		{
+			Amount:          targetAmount,
+			Asset:           "",
+			ReservedAddress: reservedAddress,
+		},
+	}
 	outputTx, fee, usedAddressList, err = CfdGoFundRawTransaction(int(KCfdNetworkMainnet), txHex, txinList, utxoList, targetAmountList, option)
 	return outputTx, fee, usedAddressList, err
 }
@@ -3675,23 +3680,23 @@ func CfdGoFundRawTransaction(networkType int, txHex string, txinList []CfdUtxo, 
 
 	var emptyInt64 int64
 	emptyInt64Ptr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&emptyInt64)))
-	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxIsBlind), emptyInt64Ptr, float64(0), fundOpt.IsBlindTx);
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxIsBlind), emptyInt64Ptr, float64(0), fundOpt.IsBlindTx)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
 	}
-	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxDustFeeRate), emptyInt64Ptr, fundOpt.DustFeeRate, false);
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxDustFeeRate), emptyInt64Ptr, fundOpt.DustFeeRate, false)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
 	}
-	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxLongTermFeeRate), emptyInt64Ptr, fundOpt.LongTermFeeRate, false);
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxLongTermFeeRate), emptyInt64Ptr, fundOpt.LongTermFeeRate, false)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
 	}
 	knapsackPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&fundOpt.KnapsackMinChange)))
-	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxKnapsackMinChange), knapsackPtr, float64(0), false);
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxKnapsackMinChange), knapsackPtr, float64(0), false)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
@@ -3845,9 +3850,9 @@ type ScriptWitness struct {
 // TxIn : transaction input.
 type TxIn struct {
 	// utxo outpoint.
-	OutPoint     OutPoint
+	OutPoint OutPoint
 	// sequence number.
-	Sequence     uint32
+	Sequence uint32
 	// witness stack.
 	WitnessStack ScriptWitness
 }
@@ -3855,11 +3860,11 @@ type TxIn struct {
 // TxOut : transaction output.
 type TxOut struct {
 	// satoshi amount.
-	Amount        int64
+	Amount int64
 	// locking script.
 	LockingScript string
 	// address (if locking script is usual hashtype.)
-	Address       string
+	Address string
 }
 
 // ConfidentialTxIn : confidential transaction input.
