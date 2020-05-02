@@ -835,6 +835,10 @@ func TestCfdAddSignConfidentialTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "0268633a57723c6612ef217c49bdf804c632a14be2967c76afec4fd5781ad4c2131f358b2381a039c8c502959c64fbfeccf287be7dae710b4446968553aefbea", signature)
 
+	isVerify, err := CfdGoVerifyEcSignature(sighash, pubkey, signature)
+	assert.NoError(t, err)
+	assert.True(t, isVerify)
+
 	// add signature
 	txHex, err = CfdGoAddConfidentialTxDerSign(
 		kTxData, txid, vout, isWitness, signature, sigHashType, false, true)
@@ -853,6 +857,14 @@ func TestCfdAddSignConfidentialTx(t *testing.T) {
 	stackData, err := CfdGoGetConfidentialTxInWitness(txHex, 0, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, pubkey, stackData)
+
+	isVerify, err = CfdGoVerifySignature(int(KCfdNetworkLiquidv1), txHex, signature, hashType, pubkey, "", txid, vout, sigHashType, false, int64(13000000000000), "")
+	assert.NoError(t, err)
+	assert.True(t, isVerify)
+
+	isVerify, err = CfdGoVerifyTxSign(int(KCfdNetworkLiquidv1), txHex, txid, vout, "ert1qav7q64dhpx9y4m62rrhpa67trmvjf2ptxfddld", int(KCfdP2wpkhAddress), "", int64(13000000000000), "")
+	assert.NoError(t, err)
+	assert.True(t, isVerify)
 
 	if err != nil {
 		fmt.Print("[error message] " + err.Error() + "\n")
@@ -1080,6 +1092,81 @@ func TestCfdAddMultisigSignConfidentialTxWitness(t *testing.T) {
 		err = CfdGoFreeMultisigSignHandle(multiSignHandle)
 		assert.NoError(t, err)
 	}
+
+	if err != nil {
+		fmt.Print("[error message] " + err.Error() + "\n")
+	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestCfdAddMultisigSignConfidentialTxManual(t *testing.T) {
+	kTxData := "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000"
+
+	txid := "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f"
+	vout := uint32(0)
+
+	pubkey1 := "02715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad"
+	privkey1 := "cRVLMWHogUo51WECRykTbeLNbm5c57iEpSegjdxco3oef6o5dbFi"
+	pubkey2 := "02bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d71"
+	privkey2 := "cQUTZ8VbWNYBEtrB7xwe41kqiKMQPRZshTvBHmkoJGaUfmS5pxzR"
+	networkType := (int)(KCfdNetworkRegtest)
+	sigHashType := (int)(KCfdSigHashAll)
+	hashType := (int)(KCfdP2wsh)
+
+	// create multisig address
+	pubkeys := []string{pubkey2, pubkey1}
+	addr, scriptsig, multisigScript, err := CfdGoCreateMultisigScript(
+		networkType, hashType, pubkeys, uint32(2))
+	assert.NoError(t, err)
+	assert.Equal(t, "bcrt1qdenhgyqf6yzkwjshlph8xsesxrh2qcpuqg8myh4q33h6m4kz7cksgwt0dh", addr)
+	assert.Equal(t, "522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae", multisigScript)
+	assert.Equal(t, "", scriptsig)
+
+	satoshi := int64(13000000000000)
+	sighash, err := CfdGoCreateConfidentialSighash(kTxData, txid, vout,
+		hashType, "", multisigScript, satoshi, "", sigHashType, false)
+	assert.NoError(t, err)
+	assert.Equal(t, "d17f091203341a0d1f0101c6d010a40ce0f3cef8a09b2b605b77bb6cfc23359f", sighash)
+
+	// user1
+	signature1, err := CfdGoCalculateEcSignature(
+		sighash, "", privkey1, networkType, true)
+	assert.NoError(t, err)
+
+	// user2
+	signature2, err := CfdGoCalculateEcSignature(
+		sighash, "", privkey2, networkType, true)
+	assert.NoError(t, err)
+
+	derSignature2, err := CfdGoEncodeSignatureByDer(signature2, sigHashType, false)
+	assert.NoError(t, err)
+	assert.Equal(t, "30440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a7901", derSignature2)
+
+	signDataList := []CfdSignParameter{
+		{
+			Data:                "",
+			IsDerEncode:         false,
+			SighashType:         sigHashType,
+			SighashAnyoneCanPay: false,
+		},
+		{
+			Data:                derSignature2,
+			IsDerEncode:         false,
+			SighashType:         sigHashType,
+			SighashAnyoneCanPay: false,
+		},
+		{
+			Data:                signature1,
+			IsDerEncode:         true,
+			SighashType:         sigHashType,
+			SighashAnyoneCanPay: false,
+		},
+	}
+	txHex, err := CfdGoAddConfidentialTxScriptHashSign(kTxData, txid, vout, hashType, signDataList, multisigScript)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "0200000001020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000000004004730440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a790147304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b0147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae00000000000000000000000000", txHex)
 
 	if err != nil {
 		fmt.Print("[error message] " + err.Error() + "\n")
@@ -2033,11 +2120,11 @@ func TestCfdGoAddConfidentialTxMultisigSign(t *testing.T) {
 
 func TestCfdGoDecodeRawTransaction(t *testing.T) {
 	txHex := "0200000001020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000000004004730440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a790147304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b0147522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae00000000000000000000000000"
-	expJsonStr := "{\"txid\":\"cf7783b2b1de646e35186df988a219a17f0317b5c3f3c47fa4ab2d7463ea3992\",\"hash\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"wtxid\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"withash\":\"a9357382302ed93ab51083f451e2d7872db11ef07948198b30166af1576fe678\",\"version\":2,\"size\":745,\"vsize\":571,\"weight\":2281,\"locktime\":0,\"vin\":[{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":0,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"txinwitness\":[\"\",\"30440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a7901\",\"304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b01\",\"522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae\"]},{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":1,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"issuance\":{\"assetBlindingNonce\":\"0b8954757234fd3ec9cf0dd6ef0a89d825ec56a9532e7da4b6cb90c51be3bbd8\",\"assetEntropy\":\"6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306\",\"isreissuance\":true,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"assetamount\":600000000}}],\"vout\":[{\"value\":999587680,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"02200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d\",\"commitmentnonce_fully_valid\":true,\"n\":0,\"scriptPubKey\":{\"asm\":\"OP_HASH160 ef3e40882e17d6e477082fcafeb0f09dc32d377b OP_EQUAL\",\"hex\":\"a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87\",\"reqSigs\":1,\"type\":\"scripthash\",\"addresses\":[\"H4zXUS6DJhgaQz4VD6qeq9n5mHhM9rsSMP\"]}},{\"value\":700000000,\"asset\":\"ed6927df918c89b5e3d8b5062acab2c749a3291bb7451d4267c7daaf1b52ad0b\",\"commitmentnonce\":\"02cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a\",\"commitmentnonce_fully_valid\":true,\"n\":1,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 6c22e209d36612e0d9d2a20b814d7d8648cc7a77 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"Q789tcqaWXVKMzoEVLcNfreWoGaWauD7XG\"]}},{\"value\":50000,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"\",\"commitmentnonce_fully_valid\":false,\"n\":2,\"scriptPubKey\":{\"asm\":\"\",\"hex\":\"\",\"type\":\"fee\"}},{\"value\":600000000,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"commitmentnonce\":\"03ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed879\",\"commitmentnonce_fully_valid\":true,\"n\":3,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 9bdcb18911fa9faad6632ca43b81739082b0a195 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"QBUWEyd6fhyYwZotj1wEbDqoADc9dPEVeo\"]}}]}"
+	expJSONStr := "{\"txid\":\"cf7783b2b1de646e35186df988a219a17f0317b5c3f3c47fa4ab2d7463ea3992\",\"hash\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"wtxid\":\"d6a850f43637361ad8501cb47e4d0725af4ad50657ceb8a6e0d7c975effae805\",\"withash\":\"a9357382302ed93ab51083f451e2d7872db11ef07948198b30166af1576fe678\",\"version\":2,\"size\":745,\"vsize\":571,\"weight\":2281,\"locktime\":0,\"vin\":[{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":0,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"txinwitness\":[\"\",\"30440220795dbf165d3197fe27e2b73d57cacfb8d742029c972b109040c7785aee4e75ea022065f7a985efe82eba1d0e0cafd7cf711bb8c65485bddc4e495315dd92bd7e4a7901\",\"304402202ce4acde192e4109832d46970b510158d42fc156c92afff137157ebfc2a03e2a02200b7dfd3a92770d79d29b3c55fb6325b22bce0e1362de74b2dac80d9689b5a89b01\",\"522102bfd7daa5d113fcbd8c2f374ae58cbb89cbed9570e898f1af5ff989457e2d4d712102715ed9a5f16153c5216a6751b7d84eba32076f0b607550a58b209077ab7c30ad52ae\"]},{\"txid\":\"57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f\",\"vout\":1,\"scriptSig\":{\"asm\":\"\",\"hex\":\"\"},\"is_pegin\":false,\"sequence\":4294967295,\"issuance\":{\"assetBlindingNonce\":\"0b8954757234fd3ec9cf0dd6ef0a89d825ec56a9532e7da4b6cb90c51be3bbd8\",\"assetEntropy\":\"6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306\",\"isreissuance\":true,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"assetamount\":600000000}}],\"vout\":[{\"value\":999587680,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"02200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d\",\"commitmentnonce_fully_valid\":true,\"n\":0,\"scriptPubKey\":{\"asm\":\"OP_HASH160 ef3e40882e17d6e477082fcafeb0f09dc32d377b OP_EQUAL\",\"hex\":\"a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87\",\"reqSigs\":1,\"type\":\"scripthash\",\"addresses\":[\"H4zXUS6DJhgaQz4VD6qeq9n5mHhM9rsSMP\"]}},{\"value\":700000000,\"asset\":\"ed6927df918c89b5e3d8b5062acab2c749a3291bb7451d4267c7daaf1b52ad0b\",\"commitmentnonce\":\"02cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a\",\"commitmentnonce_fully_valid\":true,\"n\":1,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 6c22e209d36612e0d9d2a20b814d7d8648cc7a77 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"Q789tcqaWXVKMzoEVLcNfreWoGaWauD7XG\"]}},{\"value\":50000,\"asset\":\"186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179\",\"commitmentnonce\":\"\",\"commitmentnonce_fully_valid\":false,\"n\":2,\"scriptPubKey\":{\"asm\":\"\",\"hex\":\"\",\"type\":\"fee\"}},{\"value\":600000000,\"asset\":\"accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd\",\"commitmentnonce\":\"03ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed879\",\"commitmentnonce_fully_valid\":true,\"n\":3,\"scriptPubKey\":{\"asm\":\"OP_DUP OP_HASH160 9bdcb18911fa9faad6632ca43b81739082b0a195 OP_EQUALVERIFY OP_CHECKSIG\",\"hex\":\"76a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac\",\"reqSigs\":1,\"type\":\"pubkeyhash\",\"addresses\":[\"QBUWEyd6fhyYwZotj1wEbDqoADc9dPEVeo\"]}}]}"
 
 	jsonStr, err := CfdGoDecodeRawTransactionJson(txHex, "mainnet", true)
 	assert.NoError(t, err)
-	assert.Equal(t, jsonStr, expJsonStr)
+	assert.Equal(t, jsonStr, expJSONStr)
 	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
@@ -2179,7 +2266,7 @@ func TestMnemonic(t *testing.T) {
 		assert.Equal(t, "あいさつ", mnemonicJaList[1])
 	}
 
-	mnemonicWords := []string {
+	mnemonicWords := []string{
 		"gauge",
 		"believe",
 		"rebel",
@@ -2340,6 +2427,174 @@ func TestGetTransactionBitcoin(t *testing.T) {
 	txoutIndex2, err := CfdGoGetTxOutIndex(network, tx, "", "0014751e76e8199196d454941c45d1b3a323f1433bd6")
 	assert.NoError(t, err)
 	assert.Equal(t, uint32(0), txoutIndex2)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestKeyChangeApi(t *testing.T) {
+	pubkey := "03662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9"
+	privkey := "036b13c5a0dd9935fe175b2b9ff86585c231e734b2148149d788a941f1f4f566"
+	tweak := "98430d10471cf697e2661e31ceb8720750b59a85374290e175799ba5dd06508e"
+
+	uncompressPubkey, err := CfdGoUncompressPubkey(pubkey)
+	assert.NoError(t, err)
+	assert.Equal(t, "04662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9eeccf9a82564aef031b5369e86ab05c8f3214a83c81eb643c38fea774b759431",
+		uncompressPubkey)
+
+	compressPubkey, err := CfdGoCompressPubkey(uncompressPubkey)
+	assert.NoError(t, err)
+	assert.Equal(t, pubkey, compressPubkey)
+
+	tweakAddPubkey, err := CfdGoPubkeyTweakAdd(pubkey, tweak)
+	assert.NoError(t, err)
+	assert.Equal(t, "02b05cf99a2f556177a38f5108445472316e87eb4f5b243d79d7e5829d3d53babc", tweakAddPubkey)
+
+	tweakMulPubkey, err := CfdGoPubkeyTweakMul(pubkey, tweak)
+	assert.NoError(t, err)
+	assert.Equal(t, "0305d10e760a529d0523e98892d2deff59b91593a0d670bd82271cfa627c9e7e18", tweakMulPubkey)
+
+	negatePubkey, err := CfdGoNegatePubkey(pubkey)
+	assert.NoError(t, err)
+	assert.Equal(t, "02662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9", negatePubkey)
+
+	tweakAddPrivkey, err := CfdGoPrivkeyTweakAdd(privkey, tweak)
+	assert.NoError(t, err)
+	assert.Equal(t, "9bae20d5e7fa8fcde07d795d6eb0d78d12e781b9e957122b4d0244e7cefb45f4", tweakAddPrivkey)
+
+	tweakMulPrivkey, err := CfdGoPrivkeyTweakMul(privkey, tweak)
+	assert.NoError(t, err)
+	assert.Equal(t, "aa71b12accba23b49761a7521e661f07a7e5742ac48cf708b8f9497b3a72a957", tweakMulPrivkey)
+
+	negatePrivkey, err := CfdGoNegatePrivkey(privkey)
+	assert.NoError(t, err)
+	assert.Equal(t, "fc94ec3a5f2266ca01e8a4d460079a78f87cf5b1fd341ef1e849b54ade414bdb", negatePrivkey)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestSchnorrApi(t *testing.T) {
+	oraclePubkey := "033a04fd443fcc6c2e801ffbb042931e57b02036151ed6f37a5c5051fd542c67ec"
+	oraclePrivkey := "2f6e981e861e300dc980c4a83be11555da0fbb6490044c2f18e786b622c0e97c"
+	pubkey := "03662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9"
+	privkey := "036b13c5a0dd9935fe175b2b9ff86585c231e734b2148149d788a941f1f4f566"
+	message := "98430d10471cf697e2661e31ceb8720750b59a85374290e175799ba5dd06508e"
+
+	sig, err := CfdGoCalculateSchnorrSignature(oraclePrivkey, privkey, message)
+	assert.NoError(t, err)
+	assert.Equal(t, "5e0e2b4333f083f1c5917e203e29644d60b23596cac04f9f2fae07b4dd6a3d462e8dc7aa7be5e9298f518cba6578bd2872bf41a705dd3b98f06a6fa023f249e6",
+		sig)
+
+	isVerify, err := CfdGoVerifySchnorrSignature(oraclePubkey, sig, message)
+	assert.NoError(t, err)
+	assert.True(t, isVerify)
+
+	isVerify, err = CfdGoVerifySchnorrSignature(pubkey, sig, message)
+	assert.NoError(t, err)
+	assert.False(t, isVerify)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestSerializeByteData(t *testing.T) {
+	serialized, err := CfdGoSerializeByteData("0123456789ab")
+	assert.NoError(t, err)
+	assert.Equal(t, "060123456789ab", serialized)
+
+	// serialized, err = CfdGoSerializeByteData("")
+	// assert.NoError(t, err)
+	// assert.Equal(t, "00", serialized)
+
+	serialized, err = CfdGoSerializeByteData("111111111111111111112222222222222222222233333333333333333333444444444444444444445555555555555555555566666666666666666666777777777777777777778888888888888888888899999999999999999999aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbccccccccccccccccccccdddddddddddddddddddd111111111111111111112222222222222222222233333333333333333333444444444444444444445555555555555555555566666666666666666666777777777777777777778888888888888888888899999999999999999999aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbccccccccccccccccccccdddddddddddddddddddd")
+	assert.NoError(t, err)
+	assert.Equal(t, "fd0401111111111111111111112222222222222222222233333333333333333333444444444444444444445555555555555555555566666666666666666666777777777777777777778888888888888888888899999999999999999999aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbccccccccccccccccccccdddddddddddddddddddd111111111111111111112222222222222222222233333333333333333333444444444444444444445555555555555555555566666666666666666666777777777777777777778888888888888888888899999999999999999999aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbccccccccccccccccccccdddddddddddddddddddd", serialized)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestFundRawTransactionBtc(t *testing.T) {
+	_, utxos := GetCoinSelectionTestData()
+	netType := int(KCfdNetworkMainnet)
+	option := NewCfdFundRawTxOption(netType)
+	option.EffectiveFeeRate = float64(5.0)
+
+	txinList := []CfdUtxo{
+		{
+			Txid:            "8b84fd7266e1ec09cb5a27cd032729be0102178e250645ee429518e7e83f99f1",
+			Vout:            uint32(0),
+			Amount:          int64(5000000000),
+			Asset:           "",
+			Descriptor:      "sh(wpkh(02f466d403c0c4057257e7bcbed1d172880fe75f337c77df5490ad9bc8cc2d6a16))",
+			IsIssuance:      false,
+			IsBlindIssuance: false,
+			IsPegin:         false,
+			PeginBtcTxSize:  uint32(0),
+			FedpegScript:    "",
+		},
+	}
+	txHex := "02000000000101f1993fe8e7189542ee4506258e170201be292703cd275acb09ece16672fd848b0000000017160014703e50206e4d27ad1340a7b6a0d94563a3fb768afeffffff02080410240100000017a9141e60c63c6d099ee2b48eded11acfdf3a79a891f48700e1f5050000000017a9142699570770f32e0cf3e1d12d81064fbc45899e8a870247304402202b12edc9a75edd70a0e4261c5816efa2c5256e3f8bcffdd49182bd9f791c74e902201e3ae5c1062a83d787098322b3071fe68c4b181e0088b0e0087020495adaf6e3012102f466d403c0c4057257e7bcbed1d172880fe75f337c77df5490ad9bc8cc2d6a1600000000"
+
+	outputTx, fee, usedAddressList, err := CfdGoFundRawTransactionBtc(txHex, txinList, utxos, int64(0), "bc1qfhpyztlrm36euwpskmanvqnyer8q403cnzfn9t", &option)
+	assert.NoError(t, err)
+	assert.Equal(t, "02000000000102f1993fe8e7189542ee4506258e170201be292703cd275acb09ece16672fd848b0000000017160014703e50206e4d27ad1340a7b6a0d94563a3fb768afeffffff040b0000000000000000000000000000000000000000000000000000000000000000000000ffffffff03080410240100000017a9141e60c63c6d099ee2b48eded11acfdf3a79a891f48700e1f5050000000017a9142699570770f32e0cf3e1d12d81064fbc45899e8a87a5f41901000000001600144dc2412fe3dc759e3830b6fb360264c8ce0abe380247304402202b12edc9a75edd70a0e4261c5816efa2c5256e3f8bcffdd49182bd9f791c74e902201e3ae5c1062a83d787098322b3071fe68c4b181e0088b0e0087020495adaf6e3012102f466d403c0c4057257e7bcbed1d172880fe75f337c77df5490ad9bc8cc2d6a160000000000", outputTx)
+	assert.Equal(t, int64(1425), fee)
+	assert.Equal(t, 1, len(usedAddressList))
+	if len(usedAddressList) == 1 {
+		assert.Equal(t, "bc1qfhpyztlrm36euwpskmanvqnyer8q403cnzfn9t", usedAddressList[0])
+	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestFundRawTransaction(t *testing.T) {
+	assets, utxos := GetCoinSelectionTestData()
+	netType := int(KCfdNetworkLiquidv1)
+	option := NewCfdFundRawTxOption(netType)
+	option.EffectiveFeeRate = float64(0.1)
+	option.FeeAsset = assets[0]
+
+	targets := []CfdFundRawTxTargetAmount{
+		{
+			Amount:          int64(115800000),
+			Asset:           assets[0],
+			ReservedAddress: "ex1qdnf34k9c255nfa9anjx0sj5ne0t6f80p5rne4e",
+		},
+		{
+			Amount:          int64(347180040),
+			Asset:           assets[1],
+			ReservedAddress: "ex1q3tlca6nma70vvrf46up5ktjguxqwj0zamt7ktn",
+		},
+		{
+			Amount:          int64(37654100),
+			Asset:           assets[2],
+			ReservedAddress: "ex1q0xdg60c3y5dk5m05hg2k52xavjkedx53t3k40m",
+		},
+	}
+	txinList := []CfdUtxo{
+		{
+			Txid:            "9f96ade4b41d5433f4eda31e1738ec2b36f6e7d1420d94a6af99801a88f7f7ff",
+			Vout:            uint32(0),
+			Amount:          int64(112340000),
+			Asset:           assets[0],
+			Descriptor:      "sh(wpkh([ef735203/0'/0'/7']022c2409fbf657ba25d97bb3dab5426d20677b774d4fc7bd3bfac27ff96ada3dd1))#4z2vy08x",
+			IsIssuance:      false,
+			IsBlindIssuance: false,
+			IsPegin:         false,
+			PeginBtcTxSize:  uint32(0),
+			FedpegScript:    "",
+		},
+	}
+	txHex := "010000000001fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000feffffff010100000000000000000000000000000000000000000000000000000000000000aa010000000006b22c2000160014c6598809d09edaacb8f4f4d5b9b81e4413a5724311000000"
+
+	outputTx, fee, usedAddressList, err := CfdGoFundRawTransaction(netType, txHex, txinList, utxos, targets, &option)
+	assert.NoError(t, err)
+	assert.Equal(t, "010000000006fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000feffffff0a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000feffffff0ad4a335556c64c3e2599c3a4c3ddff5b28f616fa55cf2323d2ae642eef74a8f0000000000feffffff030b0000000000000000000000000000000000000000000000000000000000000000000000feffffff020b0000000000000000000000000000000000000000000000000000000000000000000000feffffff010c0000000000000000000000000000000000000000000000000000000000000000000000feffffff050100000000000000000000000000000000000000000000000000000000000000aa010000000006b22c2000160014c6598809d09edaacb8f4f4d5b9b81e4413a572430100000000000000000000000000000000000000000000000000000000000000aa01000000000000015000000100000000000000000000000000000000000000000000000000000000000000bb010000000014b18c12001600148aff8eea7bef9ec60d35d7034b2e48e180e93c5d0100000000000000000000000000000000000000000000000000000000000000cc0100000000023e8eb800160014799a8d3f11251b6a6df4ba156a28dd64ad969a910100000000000000000000000000000000000000000000000000000000000000aa010000000006fc225c001600146cd31ad8b8552934f4bd9c8cf84a93cbd7a49de111000000", outputTx)
+	assert.Equal(t, int64(336), fee)
+	assert.Equal(t, 3, len(usedAddressList))
+	if len(usedAddressList) == 3 {
+		assert.Equal(t, "ex1q3tlca6nma70vvrf46up5ktjguxqwj0zamt7ktn", usedAddressList[0])
+		assert.Equal(t, "ex1q0xdg60c3y5dk5m05hg2k52xavjkedx53t3k40m", usedAddressList[1])
+		assert.Equal(t, "ex1qdnf34k9c255nfa9anjx0sj5ne0t6f80p5rne4e", usedAddressList[2])
+	}
 
 	fmt.Printf("%s test done.\n", GetFuncName())
 }
