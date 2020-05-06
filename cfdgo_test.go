@@ -1023,6 +1023,11 @@ func TestCfdAddMultisigSignConfidentialTx(t *testing.T) {
 
 		err = CfdGoFreeMultisigSignHandle(multiSignHandle)
 		assert.NoError(t, err)
+
+		// verify der encoded signature
+		isVerify, err := CfdGoVerifySignature(int(KCfdNetworkLiquidv1), kTxData, derSignature2, hashType, pubkey2, multisigScript, txid, vout, sigHashType, false, satoshi, "")
+		assert.NoError(t, err)
+		assert.True(t, isVerify)
 	}
 
 	if err != nil {

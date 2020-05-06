@@ -2239,9 +2239,22 @@ func CfdGoVerifyConfidentialTxSignature(
 	}
 	defer CfdGoFreeHandle(handle)
 
+	sig := signature
+	if len(signature) > (65 * 2) {
+		var decodedSig string
+		var decSighashType int
+		var decSighashAnyoneCanPay bool
+		ret := CfdDecodeSignatureFromDer(handle, signature, &decodedSig, &decSighashType, &decSighashAnyoneCanPay)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return false, err
+		}
+		sig = decodedSig
+	}
+
 	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
 	satoshiAmountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiAmount)))
-	ret := CfdVerifyConfidentialTxSignature(handle, txHex, signature,
+	ret := CfdVerifyConfidentialTxSignature(handle, txHex, sig,
 		pubkey, script, txid, voutPtr, sighashType, sighashAnyoneCanPay,
 		satoshiAmountPtr, valueCommitment, witnessVersion)
 
@@ -2283,17 +2296,17 @@ func CfdGoNormalizeSignature(signature string) (normalizedSignature string, err 
  * param: derEncodedSignature      signature encoded by der encodeing.
  * return: signature               compact format signature.
  * return: sighashType             sighash type.
- * return: sighash_anyone_can_pay  flag of signing only the current input.
+ * return: sighashAnyoneCanPay     flag of signing only the current input.
  * return: err                     error
  */
-func CfdGoDecodeSignatureFromDer(derEncodedSignature string) (signature string, sighashType int, sighash_anyone_can_pay bool, err error) {
+func CfdGoDecodeSignatureFromDer(derEncodedSignature string) (signature string, sighashType int, sighashAnyoneCanPay bool, err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
 	}
 	defer CfdGoFreeHandle(handle)
 
-	ret := CfdDecodeSignatureFromDer(handle, derEncodedSignature, &signature, &sighashType, &sighash_anyone_can_pay)
+	ret := CfdDecodeSignatureFromDer(handle, derEncodedSignature, &signature, &sighashType, &sighashAnyoneCanPay)
 	err = convertCfdError(ret, handle)
 	return
 }
@@ -3125,9 +3138,22 @@ func CfdGoVerifySignature(networkType int, txHex string, signature string, hashT
 	}
 	defer CfdGoFreeHandle(handle)
 
+	sig := signature
+	if len(signature) > (65 * 2) {
+		var decodedSig string
+		var decSighashType int
+		var decSighashAnyoneCanPay bool
+		ret := CfdDecodeSignatureFromDer(handle, signature, &decodedSig, &decSighashType, &decSighashAnyoneCanPay)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return false, err
+		}
+		sig = decodedSig
+	}
+
 	voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&vout)))
 	satoshiPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&satoshiValue)))
-	ret := CfdVerifySignature(handle, networkType, txHex, signature, hashType, pubkey, redeemScript, txid, voutPtr, sighashType, sighashAnyoneCanPay, satoshiPtr, valueByteData)
+	ret := CfdVerifySignature(handle, networkType, txHex, sig, hashType, pubkey, redeemScript, txid, voutPtr, sighashType, sighashAnyoneCanPay, satoshiPtr, valueByteData)
 	if ret == (int)(KCfdSuccess) {
 		isVerify = true
 	} else if ret == (int)(KCfdSignVerificationError) {
