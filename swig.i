@@ -651,7 +651,7 @@ func NewCfdEstimateFeeOption() CfdEstimateFeeOption {
  * param: inputs        inputs to set in the transaction
  * param: option        options for fee estimation
  * return: totalFee     total fee value when all utxos set to input.
- *     (totalFee = txFee + utxoFee)
+ *     (totalFee = txFee + inputFee)
  * return: txFee        base transaction fee value.
  * return: inputFee     fee value all of input set.
  */
@@ -663,8 +663,11 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 	defer CfdGoFreeHandle(handle)
 
 	var estimateFeeHandle uintptr
-	if ret := CfdInitializeEstimateFee(handle, &estimateFeeHandle,
-		option.UseElements); ret != (int)(KCfdSuccess) {
+	if ret := CfdInitializeEstimateFee(
+		handle,
+		&estimateFeeHandle,
+		option.UseElements,
+	); ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
 	}
@@ -674,9 +677,18 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 		vout := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.Utxo.Vout)))
 		peginBtcTxSize := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.PeginBtcTxSize)))
 		if ret := CfdAddTxInForEstimateFee(
-			handle, estimateFeeHandle, input.Utxo.Txid, vout, input.Utxo.Descriptor,
-			input.Utxo.Asset, input.IsIssuance, input.IsBlindIssuance, input.IsPegin,
-			peginBtcTxSize, input.FedpegScript); ret != (int)(KCfdSuccess) {
+			handle,
+			estimateFeeHandle,
+			input.Utxo.Txid,
+			vout,
+			input.Utxo.Descriptor,
+			input.Utxo.Asset,
+			input.IsIssuance,
+			input.IsBlindIssuance,
+			input.IsPegin,
+			peginBtcTxSize,
+			input.FedpegScript,
+		); ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, handle)
 			return
 		}
@@ -685,9 +697,16 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 	var txFeeWork, inputFeeWork int64
 	txFeeWorkPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&txFeeWork)))
 	inputFeeWorkPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&inputFeeWork)))
-	if ret := CfdFinalizeEstimateFee(handle, estimateFeeHandle, txHex,
-		option.FeeAsset, txFeeWorkPtr, inputFeeWorkPtr, option.RequireBlind,
-		option.EffectiveFeeRate); ret != (int)(KCfdSuccess) {
+	if ret := CfdFinalizeEstimateFee(
+		handle,
+		estimateFeeHandle,
+		txHex,
+		option.FeeAsset,
+		txFeeWorkPtr,
+		inputFeeWorkPtr,
+		option.RequireBlind,
+		option.EffectiveFeeRate,
+	); ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return
 	}
