@@ -3616,7 +3616,7 @@ func NewCfdFundRawTxOption(networkType int) CfdFundRawTxOption {
 	if networkType == int(KCfdNetworkLiquidv1) || networkType == int(KCfdNetworkElementsRegtest) {
 		option.FeeAsset = "0000000000000000000000000000000000000000000000000000000000000000"
 		option.IsBlindTx = true
-		option.EffectiveFeeRate = float64(0.1)
+		option.EffectiveFeeRate = float64(0.15)
 		option.LongTermFeeRate = float64(-1.0)
 		option.DustFeeRate = float64(-1.0)
 		option.KnapsackMinChange = int64(-1)
