@@ -465,6 +465,8 @@ type CfdUtxo struct {
 	PeginBtcTxSize uint32
 	// fedpegscript hex (require when IsPegin is true)
 	FedpegScript string
+	// scriptsig template hex (require script hash estimate fee)
+	ScriptSigTemplate string
 }
 
 /**
@@ -480,7 +482,7 @@ type CfdTargetAmount struct {
 /**
  * CoinSelection option data struct.
  */
-type CfdCoinSelectionOption struct {
+type CfdCoinSelectOption struct {
 	// fee asset
 	FeeAsset string
 	// tx-fee amount
@@ -493,18 +495,24 @@ type CfdCoinSelectionOption struct {
 	DustFeeRate float64
 	// knapsack min change value
 	KnapsackMinChange int64
+	// blind exponent
+	Exponent int64
+	// blind minimum bits
+	MinimumBits int64
 }
 
 /**
- * Create CfdCoinSelectionOption struct set default value.
+ * Create CfdCoinSelectOption struct set default value.
  * return: option        CoinSelection option
  */
-func NewCfdCoinSelectionOption() CfdCoinSelectionOption {
-	option := CfdCoinSelectionOption{}
+func NewCfdCoinSelectionOption() CfdCoinSelectOption {
+	option := CfdCoinSelectOption{}
 	option.EffectiveFeeRate = float64(20.0)
 	option.LongTermFeeRate = float64(-1.0)
 	option.DustFeeRate = float64(-1.0)
 	option.KnapsackMinChange = int64(-1)
+	option.Exponent = int64(0)
+	option.MinimumBits = int64(-1)
 	return option
 }
 
@@ -518,7 +526,7 @@ func NewCfdCoinSelectionOption() CfdCoinSelectionOption {
  * return: utxoFee       fee by utxo
  * return: err           error
  */
-func CfdGoCoinSelection(utxos []CfdUtxo, targetAmounts []CfdTargetAmount, option CfdCoinSelectionOption) (selectUtxos []CfdUtxo, totalAmounts []CfdTargetAmount, utxoFee int64, err error) {
+func CfdGoCoinSelection(utxos []CfdUtxo, targetAmounts []CfdTargetAmount, option CfdCoinSelectOption) (selectUtxos []CfdUtxo, totalAmounts []CfdTargetAmount, utxoFee int64, err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
@@ -546,7 +554,7 @@ func CfdGoCoinSelection(utxos []CfdUtxo, targetAmounts []CfdTargetAmount, option
 		indexBuf := SwigcptrInt32_t(uintptr(unsafe.Pointer(&i)))
 		voutBuf := SwigcptrUint32_t(uintptr(unsafe.Pointer(&utxos[i].Vout)))
 		amoutBuf := SwigcptrInt64_t(uintptr(unsafe.Pointer(&utxos[i].Amount)))
-		ret = CfdAddCoinSelectionUtxo(handle, coinSelectHandle, indexBuf, utxos[i].Txid, voutBuf, amoutBuf, utxos[i].Asset, utxos[i].Descriptor)
+		ret = CfdAddCoinSelectionUtxoTemplate(handle, coinSelectHandle, indexBuf, utxos[i].Txid, voutBuf, amoutBuf, utxos[i].Asset, utxos[i].Descriptor, utxos[i].ScriptSigTemplate)
 		if ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, handle)
 			return
@@ -561,6 +569,19 @@ func CfdGoCoinSelection(utxos []CfdUtxo, targetAmounts []CfdTargetAmount, option
 			err = convertCfdError(ret, handle)
 			return
 		}
+	}
+
+	exponentPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.Exponent)))
+	ret = CfdSetOptionCoinSelection(handle, coinSelectHandle, int(KCfdCoinSelectionExponent), exponentPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
+	}
+	minimumBitsPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.MinimumBits)))
+	ret = CfdSetOptionCoinSelection(handle, coinSelectHandle, int(KCfdCoinSelectionMinimumBits), minimumBitsPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
 	}
 
 	utxoFeeBuf := SwigcptrInt64_t(uintptr(unsafe.Pointer(&utxoFee)))
@@ -621,7 +642,7 @@ type CfdEstimateFeeInput struct {
 /**
  * EstimateFee option data struct.
  */
-type CfdEstimateFeeOption struct {
+type CfdFeeEstimateOption struct {
 	// effective feerate
 	EffectiveFeeRate float64
 	// use elements chain
@@ -630,18 +651,24 @@ type CfdEstimateFeeOption struct {
 	FeeAsset string
 	// Require blinding or not
 	RequireBlind bool
+	// blinding exponent value
+	Exponent int64
+	// blinding minimum bits value
+	MinimumBits int64
 }
 
 /**
- * Create CfdEstimateFeeOption struct set default value.
+ * Create CfdFeeEstimateOption struct set default value.
  * return: option        EstimateFeeOption
  */
-func NewCfdEstimateFeeOption() CfdEstimateFeeOption {
-	option := CfdEstimateFeeOption{}
+func NewCfdEstimateFeeOption() CfdFeeEstimateOption {
+	option := CfdFeeEstimateOption{}
 	option.EffectiveFeeRate = float64(20.0)
 	option.UseElements = true
 	option.FeeAsset = ""
 	option.RequireBlind = true
+	option.Exponent = int64(0)
+	option.MinimumBits = int64(-1)
 	return option
 }
 
@@ -655,7 +682,7 @@ func NewCfdEstimateFeeOption() CfdEstimateFeeOption {
  * return: txFee        base transaction fee value.
  * return: inputFee     fee value all of input set.
  */
-func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEstimateFeeOption) (totalFee, txFee, inputFee int64, err error) {
+func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdFeeEstimateOption) (totalFee, txFee, inputFee int64, err error) {
 	handle, err := CfdGoCreateHandle()
 	if err != nil {
 		return
@@ -676,7 +703,7 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 	for _, input := range inputs {
 		vout := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.Utxo.Vout)))
 		peginBtcTxSize := SwigcptrUint32_t(uintptr(unsafe.Pointer(&input.PeginBtcTxSize)))
-		if ret := CfdAddTxInForEstimateFee(
+		if ret := CfdAddTxInTemplateForEstimateFee(
 			handle,
 			estimateFeeHandle,
 			input.Utxo.Txid,
@@ -688,10 +715,24 @@ func CfdGoEstimateFee(txHex string, inputs []CfdEstimateFeeInput, option CfdEsti
 			input.IsPegin,
 			peginBtcTxSize,
 			input.FedpegScript,
+			input.Utxo.ScriptSigTemplate,
 		); ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, handle)
 			return
 		}
+	}
+
+	exponentPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.Exponent)))
+	ret := CfdSetOptionEstimateFee(handle, estimateFeeHandle, int(KCfdEstimateFeeExponent), exponentPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
+	}
+	minimumBitsPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.MinimumBits)))
+	ret = CfdSetOptionEstimateFee(handle, estimateFeeHandle, int(KCfdEstimateFeeMinimumBits), minimumBitsPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
 	}
 
 	var txFeeWork, inputFeeWork int64
@@ -1192,6 +1233,45 @@ func CfdGoGetIssuanceBlindingKey(masterBlindingKey string, txid string, vout uin
 }
 
 /**
+ * Get default blinding key by locking script.
+ * param: masterBlindingKey    master blinding key
+ * param: lockingScript        locking script
+ * return: blindingKey         blinding key
+ * return: err                 error
+ */
+func CfdGoGetDefaultBlindingKey(masterBlindingKey string, lockingScript string) (blindingKey string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	ret := CfdGetDefaultBlindingKey(handle, masterBlindingKey, lockingScript, &blindingKey)
+	err = convertCfdError(ret, handle)
+	return blindingKey, err
+}
+
+/**
+ * Get default blinding key by address.
+ * param: masterBlindingKey    master blinding key
+ * param: address              address
+ * return: blindingKey         blinding key
+ * return: err                 error
+ */
+func CfdGoGetDefaultBlindingKeyByAddress(masterBlindingKey string, address string) (blindingKey string, err error) {
+	info, err := CfdGoGetAddressInfo(address)
+	if err != nil {
+		return "", err
+	}
+
+	blindingKey, err = CfdGoGetDefaultBlindingKey(masterBlindingKey, info.LockingScript)
+	if err != nil {
+		return "", err
+	}
+	return blindingKey, nil
+}
+
+/**
  * Get blind transaction handle.
  * return: blindHandle         blindTx handle. release: CfdGoFreeBlindHandle
  * return: err                 error
@@ -1256,6 +1336,61 @@ func CfdGoAddBlindTxOutData(blindHandle uintptr, index uint32, confidentialKey s
 }
 
 /**
+ * BlindRawTransaction option data struct.
+ */
+type CfdBlindTxOption struct {
+	// blind minimum range value
+	MinimumRangeValue int64
+	// blind exponent
+	Exponent int64
+	// blind minimum bits
+	MinimumBits int64
+}
+
+/** NewCfdBlindTxOption
+ * Create CfdBlindTxOption struct set default value.
+ * return: option       FundRawTx option
+ */
+func NewCfdBlindTxOption() CfdBlindTxOption {
+	option := CfdBlindTxOption{}
+	option.MinimumRangeValue = int64(1)
+	option.Exponent = int64(0)
+	option.MinimumBits = int64(-1)
+	return option
+}
+
+// CfdGoSetBlindTxOption is set blinding optional data.
+func CfdGoSetBlindTxOption(blindHandle uintptr, option CfdBlindTxOption) (err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return err
+	}
+	defer CfdGoFreeHandle(handle)
+
+	minRangeValPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.MinimumRangeValue)))
+	ret := CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionMinimumRangeValue), minRangeValPtr)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return err
+	}
+
+	exponentPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.Exponent)))
+	ret = CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionExponent), exponentPtr)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return err
+	}
+
+	minBitsPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&option.MinimumBits)))
+	ret = CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionMinimumBits), minBitsPtr)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return err
+	}
+	return nil
+}
+
+/**
  * Generate blind transaction.
  * param: blindHandle          blindTx handle
  * param: txHex                transaction hex
@@ -1289,6 +1424,131 @@ func CfdGoFreeBlindHandle(blindHandle uintptr) (err error) {
 	ret := CfdFreeBlindHandle(handle, blindHandle)
 	err = convertCfdError(ret, handle)
 	return
+}
+
+/**
+ * BlindRawTransaction option data struct.
+ */
+type CfdBlindInputData struct {
+	// Txid
+	Txid string
+	// Vout
+	Vout uint32
+	// Asset
+	Asset string
+	// Asset BlindFactor
+	AssetBlindFactor string
+	// satoshi value
+	Amount int64
+	// Value BlindFactor
+	ValueBlindFactor string
+	// (option) Asset blinding key
+	AssetBlindingKey string
+	// (option) Token blinding key
+	TokenBlindingKey string
+}
+
+/**
+ * BlindRawTransaction option data struct.
+ */
+type CfdBlindOutputData struct {
+	// txout index (-1: auto)
+	Index int
+	// confidential or not address
+	ConfidentialAddress string
+	// (optional) confidential key
+	ConfidentialKey string
+}
+
+/** CfdGoBlindRawTransaction
+ * Execute blindrawtransaction.
+ * param: txHex              transaction hex.
+ * param: txinList           txin utxo list.
+ * param: txoutList          txout target list. (need nonce empty txout)
+ * param: option             blindrawtransaction option.
+ * return: outputTx          blindrawtransaction tx.
+ * return: err               error
+ */
+func CfdGoBlindRawTransaction(txHex string, txinList []CfdBlindInputData, txoutList []CfdBlindOutputData, option *CfdBlindTxOption) (outputTx string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return "", err
+	}
+	defer CfdGoFreeHandle(handle)
+
+	var blindHandle uintptr
+	ret := CfdInitializeBlindTx(handle, &blindHandle)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return "", err
+	}
+	defer CfdFreeBlindHandle(handle, blindHandle)
+
+	if option != nil {
+		minRangeValPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&(*option).MinimumRangeValue)))
+		ret := CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionMinimumRangeValue), minRangeValPtr)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return "", err
+		}
+
+		exponentPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&(*option).Exponent)))
+		ret = CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionExponent), exponentPtr)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return "", err
+		}
+
+		minBitsPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&(*option).MinimumBits)))
+		ret = CfdSetBlindTxOption(handle, blindHandle, int(KCfdBlindOptionMinimumBits), minBitsPtr)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return "", err
+		}
+	}
+
+	for i := 0; i < len(txinList); i++ {
+		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinList[i].Vout)))
+		amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&txinList[i].Amount)))
+		ret = CfdAddBlindTxInData(handle, blindHandle, txinList[i].Txid, voutPtr, txinList[i].Asset, txinList[i].AssetBlindFactor, txinList[i].ValueBlindFactor, amountPtr, txinList[i].AssetBlindingKey, txinList[i].TokenBlindingKey)
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return "", err
+		}
+	}
+
+	for i := 0; i < len(txoutList); i++ {
+		if txoutList[i].Index < 0 {
+			ret = CfdAddBlindTxOutByAddress(handle, blindHandle, txoutList[i].ConfidentialAddress)
+		} else if len(txoutList[i].ConfidentialKey) > 0 {
+			index := uint32(txoutList[i].Index)
+			indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&index)))
+			ret = CfdAddBlindTxOutData(handle, blindHandle, indexPtr, txoutList[i].ConfidentialKey)
+		} else {
+			var address string
+			var confidentialKey string
+			var networkType int
+			ret = CfdParseConfidentialAddress(handle, txoutList[i].ConfidentialAddress, &address, &confidentialKey, &networkType)
+			if ret != (int)(KCfdSuccess) {
+				err = convertCfdError(ret, handle)
+				return "", err
+			}
+			index := uint32(txoutList[i].Index)
+			indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&index)))
+			ret = CfdAddBlindTxOutData(handle, blindHandle, indexPtr, confidentialKey)
+		}
+		if ret != (int)(KCfdSuccess) {
+			err = convertCfdError(ret, handle)
+			return "", err
+		}
+	}
+
+	ret = CfdFinalizeBlindTx(handle, blindHandle, txHex, &outputTx)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
+	}
+	return outputTx, nil
 }
 
 /**
@@ -3592,6 +3852,10 @@ type CfdFundRawTxOption struct {
 	DustFeeRate float64
 	// knapsack min change value
 	KnapsackMinChange int64
+	// blind exponent
+	Exponent int64
+	// blind minimum bits
+	MinimumBits int64
 }
 
 /**
@@ -3620,6 +3884,8 @@ func NewCfdFundRawTxOption(networkType int) CfdFundRawTxOption {
 		option.LongTermFeeRate = float64(-1.0)
 		option.DustFeeRate = float64(-1.0)
 		option.KnapsackMinChange = int64(-1)
+		option.Exponent = int64(0)
+		option.MinimumBits = int64(-1)
 	} else {
 		option.EffectiveFeeRate = float64(20.0)
 		option.LongTermFeeRate = float64(-1.0)
@@ -3696,7 +3962,7 @@ func CfdGoFundRawTransaction(networkType int, txHex string, txinList []CfdUtxo, 
 		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinList[i].Vout)))
 		peginBtcTxSizePtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&txinList[i].PeginBtcTxSize)))
 		amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&txinList[i].Amount)))
-		ret = CfdAddTxInForFundRawTx(handle, fundHandle, txinList[i].Txid, voutPtr, amountPtr, txinList[i].Descriptor, txinList[i].Asset, txinList[i].IsIssuance, txinList[i].IsBlindIssuance, txinList[i].IsPegin, peginBtcTxSizePtr, txinList[i].FedpegScript)
+		ret = CfdAddTxInTemplateForFundRawTx(handle, fundHandle, txinList[i].Txid, voutPtr, amountPtr, txinList[i].Descriptor, txinList[i].Asset, txinList[i].IsIssuance, txinList[i].IsBlindIssuance, txinList[i].IsPegin, peginBtcTxSizePtr, txinList[i].FedpegScript, txinList[i].ScriptSigTemplate)
 		if ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, handle)
 			return
@@ -3706,7 +3972,7 @@ func CfdGoFundRawTransaction(networkType int, txHex string, txinList []CfdUtxo, 
 	for i := 0; i < len(utxoList); i++ {
 		voutPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&utxoList[i].Vout)))
 		amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&utxoList[i].Amount)))
-		ret = CfdAddUtxoForFundRawTx(handle, fundHandle, utxoList[i].Txid, voutPtr, amountPtr, utxoList[i].Descriptor, utxoList[i].Asset)
+		ret = CfdAddUtxoTemplateForFundRawTx(handle, fundHandle, utxoList[i].Txid, voutPtr, amountPtr, utxoList[i].Descriptor, utxoList[i].Asset, utxoList[i].ScriptSigTemplate)
 		if ret != (int)(KCfdSuccess) {
 			err = convertCfdError(ret, handle)
 			return
@@ -3742,6 +4008,18 @@ func CfdGoFundRawTransaction(networkType int, txHex string, txinList []CfdUtxo, 
 	}
 	knapsackPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&fundOpt.KnapsackMinChange)))
 	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxKnapsackMinChange), knapsackPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
+	}
+	exponentPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&fundOpt.Exponent)))
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxBlindExponent), exponentPtr, float64(0), false)
+	if ret != (int)(KCfdSuccess) {
+		err = convertCfdError(ret, handle)
+		return
+	}
+	minimumBitsPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&fundOpt.MinimumBits)))
+	ret = CfdSetOptionFundRawTx(handle, fundHandle, int(KCfdFundTxBlindMinimumBits), minimumBitsPtr, float64(0), false)
 	if ret != (int)(KCfdSuccess) {
 		err = convertCfdError(ret, handle)
 		return

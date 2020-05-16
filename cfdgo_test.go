@@ -679,11 +679,34 @@ func TestCfdGetIssuanceBlindingKey(t *testing.T) {
 	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
+func TestCfdGetDefaultBlindingKey(t *testing.T) {
+	masterBlindingKey := "ac2c1e4cce122139bb25abc50599e09738143cc4bc96e55f399a5e1e45d916a9"
+	address := "ex1qav7q64dhpx9y4m62rrhpa67trmvjf2ptum84qh"
+	lockingScript := "0014eb3c0d55b7098a4aef4a18ee1eebcb1ed924a82b"
+
+	blindingKey, err := CfdGoGetDefaultBlindingKey(masterBlindingKey, lockingScript)
+	assert.NoError(t, err)
+	assert.Equal(t, "24ff3843a00c29fadee220b7d4943915cc5f65fddf1c20363495568bf406fc71", blindingKey)
+
+	blindingKey, err = CfdGoGetDefaultBlindingKeyByAddress(masterBlindingKey, address)
+	assert.NoError(t, err)
+	assert.Equal(t, "24ff3843a00c29fadee220b7d4943915cc5f65fddf1c20363495568bf406fc71", blindingKey)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
 func TestCfdBlindTransaction(t *testing.T) {
 	txHex := "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000"
 
 	blindHandle, err := CfdGoInitializeBlindTx()
 	assert.NoError(t, err)
+
+	if err == nil {
+		option := NewCfdBlindTxOption()
+		option.MinimumBits = 36
+		err = CfdGoSetBlindTxOption(blindHandle, option)
+		assert.NoError(t, err)
+	}
 
 	if err == nil {
 		err = CfdGoAddBlindTxInData(
@@ -738,6 +761,110 @@ func TestCfdBlindTransaction(t *testing.T) {
 	err2 := CfdGoFreeBlindHandle(blindHandle) // release
 	assert.NoError(t, err2)
 
+	if err == nil {
+		txData, err := CfdGoGetConfidentialTxData(txHex)
+		assert.NoError(t, err)
+		assert.Equal(t, 64, len(txData.Txid))
+		assert.Equal(t, 64, len(txData.Wtxid))
+		assert.Equal(t, 64, len(txData.WitHash))
+		assert.Equal(t, uint32(12589), txData.Size)
+		assert.Equal(t, uint32(3604), txData.Vsize)
+		assert.Equal(t, uint32(14413), txData.Weight)
+		assert.Equal(t, uint32(2), txData.Version)
+		assert.Equal(t, uint32(0), txData.LockTime)
+	}
+
+	// unblind test
+	if err == nil {
+		asset, assetValue, aabf, avbf, token, tokenValue, tabf, tvbf, err := CfdGoUnblindIssuance(
+			txHex, uint32(1),
+			"7d65c7970d836a878a1080399a3c11de39a8e82493e12b1ad154e383661fb77f",
+			"7d65c7970d836a878a1080399a3c11de39a8e82493e12b1ad154e383661fb77f")
+		assert.NoError(t, err)
+		assert.Equal(t, "accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd", asset)
+		assert.Equal(t, int64(600000000), assetValue)
+		assert.Equal(t, "0000000000000000000000000000000000000000000000000000000000000000", aabf)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", avbf)
+		assert.Equal(t, "", token)
+		assert.Equal(t, int64(0), tokenValue)
+		assert.Equal(t, "", tabf)
+		assert.Equal(t, "", tvbf)
+	}
+
+	if err == nil {
+		asset, value, abf, vbf, err := CfdGoUnblindTxOut(
+			txHex, uint32(0),
+			"6a64f506be6e60b948987aa4d180d2ab05034a6a214146e06e28d4efe101d006")
+		assert.NoError(t, err)
+		assert.Equal(t, "186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179", asset)
+		assert.Equal(t, int64(999587680), value)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", abf)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", vbf)
+	}
+
+	if err == nil {
+		asset, value, abf, vbf, err := CfdGoUnblindTxOut(
+			txHex, uint32(1),
+			"94c85164605f589c4c572874f36b8301989c7fabfd44131297e95824d473681f")
+		assert.NoError(t, err)
+		assert.Equal(t, "ed6927df918c89b5e3d8b5062acab2c749a3291bb7451d4267c7daaf1b52ad0b", asset)
+		assert.Equal(t, int64(700000000), value)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", abf)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", vbf)
+	}
+
+	if err == nil {
+		asset, value, abf, vbf, err := CfdGoUnblindTxOut(
+			txHex, uint32(3),
+			"0473d39aa6542e0c1bb6a2343b2319c3e92063dd019af4d47dbf50c460204f32")
+		assert.NoError(t, err)
+		assert.Equal(t, "accb7354c07974e00b32e4e5eef55078490141675592ac3610e6101831edb0cd", asset)
+		assert.Equal(t, int64(600000000), value)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", abf)
+		assert.NotEqual(t, "0000000000000000000000000000000000000000000000000000000000000000", vbf)
+	}
+
+	if err != nil {
+		fmt.Print("[error message] " + err.Error() + "\n")
+	}
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
+func TestCfdBlindTransaction2(t *testing.T) {
+	baseTxHex := "0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000"
+
+	// option := NewCfdBlindTxOption()
+	// option.MinimumBits = 36
+
+	txinList := []CfdBlindInputData{
+		{
+			Txid:             "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
+			Vout:             uint32(0),
+			Asset:            "186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179",
+			AssetBlindFactor: "a10ecbe1be7a5f883d5d45d966e30dbc1beff5f21c55cec76cc21a2229116a9f",
+			Amount:           int64(999637680),
+			ValueBlindFactor: "ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808",
+			AssetBlindingKey: "",
+			TokenBlindingKey: "",
+		},
+		{
+			Txid:             "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
+			Vout:             uint32(1),
+			Asset:            "ed6927df918c89b5e3d8b5062acab2c749a3291bb7451d4267c7daaf1b52ad0b",
+			AssetBlindFactor: "0b8954757234fd3ec9cf0dd6ef0a89d825ec56a9532e7da4b6cb90c51be3bbd8",
+			Amount:           int64(700000000),
+			ValueBlindFactor: "62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b",
+			AssetBlindingKey: "7d65c7970d836a878a1080399a3c11de39a8e82493e12b1ad154e383661fb77f",
+			TokenBlindingKey: "7d65c7970d836a878a1080399a3c11de39a8e82493e12b1ad154e383661fb77f",
+		},
+	}
+	// already set confidentialNonce in baseTxHex
+	txoutList := []CfdBlindOutputData{}
+
+	txHex, err := CfdGoBlindRawTransaction(baseTxHex, txinList, txoutList, nil)
+	// txHex, err := CfdGoBlindRawTransaction(baseTxHex, txinList, txoutList, &option)
+	assert.NoError(t, err)
 	if err == nil {
 		txData, err := CfdGoGetConfidentialTxData(txHex)
 		assert.NoError(t, err)
@@ -1574,7 +1701,7 @@ func TestCfdCoinSelection(t *testing.T) {
 
 	selectUtxos, totalAmounts, utxoFee, err := CfdGoCoinSelection(utxos, targets, option)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(9000), utxoFee)
+	assert.Equal(t, int64(9100), utxoFee)
 	assert.Equal(t, 5, len(selectUtxos))
 	assert.Equal(t, 3, len(totalAmounts))
 
@@ -1752,9 +1879,9 @@ func TestCfdGoEstimateFee(t *testing.T) {
 		option.RequireBlind = false
 		totalFee, txFee, inputFee, err := CfdGoEstimateFee(txHex, inputs, option)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(12580), totalFee)
+		assert.Equal(t, int64(10740), totalFee)
 		assert.Equal(t, int64(1060), txFee)
-		assert.Equal(t, int64(11520), inputFee)
+		assert.Equal(t, int64(9680), inputFee)
 	})
 
 	t.Run("ElementsTest", func(t *testing.T) {
@@ -1764,9 +1891,9 @@ func TestCfdGoEstimateFee(t *testing.T) {
 		option.FeeAsset = asset[0]
 		totalFee, txFee, inputFee, err := CfdGoEstimateFee(txHex, inputs, option)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(47940), totalFee)
-		assert.Equal(t, int64(36400), txFee)
-		assert.Equal(t, int64(11540), inputFee)
+		assert.Equal(t, int64(46380), totalFee)
+		assert.Equal(t, int64(36660), txFee)
+		assert.Equal(t, int64(9720), inputFee)
 	})
 
 	fmt.Printf("%s test done.\n", GetFuncName())
@@ -2592,8 +2719,8 @@ func TestFundRawTransaction(t *testing.T) {
 
 	outputTx, fee, usedAddressList, err := CfdGoFundRawTransaction(netType, txHex, txinList, utxos, targets, &option)
 	assert.NoError(t, err)
-	assert.Equal(t, "010000000006fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000feffffff0a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000feffffff0ad4a335556c64c3e2599c3a4c3ddff5b28f616fa55cf2323d2ae642eef74a8f0000000000feffffff030b0000000000000000000000000000000000000000000000000000000000000000000000feffffff020b0000000000000000000000000000000000000000000000000000000000000000000000feffffff010c0000000000000000000000000000000000000000000000000000000000000000000000feffffff050100000000000000000000000000000000000000000000000000000000000000aa010000000006b22c2000160014c6598809d09edaacb8f4f4d5b9b81e4413a572430100000000000000000000000000000000000000000000000000000000000000aa01000000000000027d00000100000000000000000000000000000000000000000000000000000000000000bb010000000014b18c12001600148aff8eea7bef9ec60d35d7034b2e48e180e93c5d0100000000000000000000000000000000000000000000000000000000000000cc0100000000023e8eb800160014799a8d3f11251b6a6df4ba156a28dd64ad969a910100000000000000000000000000000000000000000000000000000000000000aa010000000006fc212f001600146cd31ad8b8552934f4bd9c8cf84a93cbd7a49de111000000", outputTx)
-	assert.Equal(t, int64(637), fee)
+	assert.Equal(t, "010000000006fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000feffffff0a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000feffffff0ad4a335556c64c3e2599c3a4c3ddff5b28f616fa55cf2323d2ae642eef74a8f0000000000feffffff030b0000000000000000000000000000000000000000000000000000000000000000000000feffffff020b0000000000000000000000000000000000000000000000000000000000000000000000feffffff010c0000000000000000000000000000000000000000000000000000000000000000000000feffffff050100000000000000000000000000000000000000000000000000000000000000aa010000000006b22c2000160014c6598809d09edaacb8f4f4d5b9b81e4413a572430100000000000000000000000000000000000000000000000000000000000000aa01000000000000027900000100000000000000000000000000000000000000000000000000000000000000bb010000000014b18c12001600148aff8eea7bef9ec60d35d7034b2e48e180e93c5d0100000000000000000000000000000000000000000000000000000000000000cc0100000000023e8eb800160014799a8d3f11251b6a6df4ba156a28dd64ad969a910100000000000000000000000000000000000000000000000000000000000000aa010000000006fc2133001600146cd31ad8b8552934f4bd9c8cf84a93cbd7a49de111000000", outputTx)
+	assert.Equal(t, int64(633), fee)
 	assert.Equal(t, 3, len(usedAddressList))
 	if len(usedAddressList) == 3 {
 		assert.Equal(t, "ex1q3tlca6nma70vvrf46up5ktjguxqwj0zamt7ktn", usedAddressList[0])
