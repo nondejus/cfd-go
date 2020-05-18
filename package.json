@@ -1,6 +1,6 @@
 {
   "name": "cfd-go",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "cfd-go",
   "scripts": {
     "format_all": "go fmt cfdgo_test.go",
