@@ -2750,6 +2750,25 @@ func TestFundRawTransaction(t *testing.T) {
 	fmt.Printf("%s test done.\n", GetFuncName())
 }
 
+func TestGetCommitment(t *testing.T) {
+	assetCommitment, err := CfdGoGetAssetCommitment(
+		"6f1a4b6bd5571b5f08ab79c314dc6483f9b952af2f5ef206cd6f8e68eb1186f3",
+		"346dbdba35c19f6e3958a2c00881024503f6611d23d98d270b98ef9de3edc7a3")
+	assert.NoError(t, err)
+	assert.Equal(t, "0a533b742a568c0b5285bf5bdfe9623a78082d19fac9be1678f7c3adbb48b34d29",
+		assetCommitment)
+
+	amount := int64(13000000000000)
+	amountCommitment, err := CfdGoGetAmountCommitment(
+		amount, assetCommitment,
+		"fe3357df1f35df75412d9ad86ebd99e622e26019722f316027787a685e2cd71a")
+	assert.NoError(t, err)
+	assert.Equal(t, "08672d4e2e60f2e8d742552a8bc4ca6335ed214982c7728b4483284169aaae7f49",
+		amountCommitment)
+
+	fmt.Printf("%s test done.\n", GetFuncName())
+}
+
 func TestBlindLargeTx(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		err := BlindLargeTx(t)
