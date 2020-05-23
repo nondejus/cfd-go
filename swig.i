@@ -4162,6 +4162,33 @@ func CfdGoFundRawTransaction(networkType int, txHex string, txinList []CfdUtxo, 
 	return outputTx, fee, usedAddressList, nil
 }
 
+// CfdGoGetAssetCommitment get asset commitment.
+func CfdGoGetAssetCommitment(asset, assetBlinder string) (assetCommitment string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	ret := CfdGetAssetCommitment(handle, asset, assetBlinder, &assetCommitment)
+	err = convertCfdError(ret, handle)
+	return assetCommitment, err
+}
+
+// CfdGoGetAssetCommitment get amount commitment.
+func CfdGoGetAmountCommitment(amount int64, assetCommitment, blinder string) (commitment string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&amount)))
+	ret := CfdGetValueCommitment(handle, amountPtr, assetCommitment, blinder, &commitment)
+	err = convertCfdError(ret, handle)
+	return commitment, err
+}
+
 // refine API ------------------------------------------------------------------
 
 // InitializeTransaction : initialize createrawtransaction with version & locktime.
