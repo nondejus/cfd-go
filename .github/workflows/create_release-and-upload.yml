@@ -94,11 +94,11 @@ jobs:
       run: |
         cmake -DCMAKE_INSTALL_PREFIX="./dist" --install build
         cmake --install build
-#        cd dist
-#        del /F /Q cmake\wallycore-*
-#        del /F /Q lib\wallycore.*
-#        del /F /Q lib\libwallycore.*
-#        del /F /Q lib\pkgconfig\wallycore.pc
+        cd dist
+        del /F /Q cmake\wallycore-*
+        del /F /Q lib\wallycore.*
+        del /F /Q lib\libwallycore.*
+        del /F /Q lib\pkgconfig\wallycore.pc
     - name: create archive file
       run: |
         cd dist
