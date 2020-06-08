@@ -3685,6 +3685,29 @@ func CfdGoGetTxOutIndex(networkType int, txHex string, address string, directLoc
 }
 
 /**
+ * Update txout amount on transaction.
+ * param: networkType          network type.
+ * param: txHex                transaction hex
+ * param: index                txout index
+ * param: amount               txout amount
+ * return: outputTxHex         output transaction hex
+ * return: err                 error
+ */
+func CfdGoUpdateTxOutAmount(networkType int, txHex string, index uint32, amount int64) (outputTxHex string, err error) {
+	handle, err := CfdGoCreateHandle()
+	if err != nil {
+		return
+	}
+	defer CfdGoFreeHandle(handle)
+
+	indexPtr := SwigcptrUint32_t(uintptr(unsafe.Pointer(&index)))
+	amountPtr := SwigcptrInt64_t(uintptr(unsafe.Pointer(&amount)))
+	ret := CfdUpdateTxOutAmount(handle, networkType, txHex, indexPtr, amountPtr, &outputTxHex)
+	err = convertCfdError(ret, handle)
+	return outputTxHex, err
+}
+
+/**
  * Create sighash from transaction.
  * param: networkType          network type.
  * param: txHex                transaction hex
